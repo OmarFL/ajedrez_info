@@ -15,6 +15,37 @@ void Tablero::inicializa()
 	y_ojo = -0.01;
 	z_ojo = 23;
 
+//Inicializacion de las diferentes piezas
+	
+	piezas.eliminarContenido();
+	
+	
+	for (int fila = 0; fila < 10; fila++) {
+		piezas.agregar(new Peon(fila, 2, BLANCO));
+		piezas.agregar(new Peon(fila, 7, NEGRO));
+	}
+	piezas.agregar(new Rey(5, 1, BLANCO));
+	piezas.agregar(new Rey(5, 8, NEGRO));
+	piezas.agregar(new Dama(5, 1, BLANCO));
+	piezas.agregar(new Dama(5, 8, NEGRO));
+	piezas.agregar(new Alfil(4, 1, BLANCO));
+	piezas.agregar(new Alfil(7, 1, BLANCO));
+	piezas.agregar(new Alfil(4, 8, NEGRO));
+	piezas.agregar(new Alfil(7, 8, NEGRO));
+	piezas.agregar(new Torre(1, 1, BLANCO));
+	piezas.agregar(new Torre(10, 1, BLANCO));
+	piezas.agregar(new Torre(1, 8, NEGRO));
+	piezas.agregar(new Torre(10, 8, NEGRO));
+	piezas.agregar(new Caballo(2, 1, BLANCO));
+	piezas.agregar(new Caballo(9, 1, BLANCO));
+	piezas.agregar(new Caballo(2, 8, NEGRO));
+	piezas.agregar(new Caballo(9, 8, NEGRO));
+	piezas.agregar(new Arzobispo(3, 1, BLANCO));
+	piezas.agregar(new Arzobispo(3, 8, NEGRO));
+	piezas.agregar(new Canciller(8, 1, BLANCO));
+	piezas.agregar(new Canciller(8, 8, NEGRO));
+
+
 //Dibujar tablero
 
 void Tablero::dibuja() {
