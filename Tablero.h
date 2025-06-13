@@ -8,14 +8,8 @@ private:
 	Vector posicion;
 	Casilla casillas[10][8];
 
-	//Punto de vista del tablero
-	float x_ojo;
-	float y_ojo;
-	float z_ojo;
-
 public:
 	Tablero();
-	virtual ~Tablero() {};
 	void inicializa();
 	void dibuja();
 };
