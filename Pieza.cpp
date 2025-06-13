@@ -1,7 +1,7 @@
 #include "Pieza.h"
 #include "freeglut.h"
 
-//Funcion para realizar el polimorfismo con las funciones de dibuja de las distintas piezas
+/*
 void Pieza::dibuja() {
 	glColor3f(0.5f, 0.5f, 0.5f); // Color gris
 	glutSolidCube(1.0);
@@ -27,6 +27,7 @@ int Pieza::getfila() {
 int Pieza::getcolumna() {
 	return fc.getC();
 }
+*/
 
 Casilla Pieza::getCasilla() {
 	return fc;
