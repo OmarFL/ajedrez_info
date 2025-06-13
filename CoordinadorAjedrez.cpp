@@ -32,9 +32,6 @@ void CoordinadorAjedrez::dibuja() {
 		ETSIDI::printxy("Ajedrez informatica", -5, 13);
 		ETSIDI::setTextColor(1, 1, 1);
 		ETSIDI::setFont("fuentes/Bitwise.ttf", 12);
-		ETSIDI::printxy("PULSE LA TECLA -E- PARA EMPEZAR", -5, 11);
-		ETSIDI::printxy("PULSE LA TECLA -S- PARA SALIR", -5, 10);
-		ETSIDI::printxy("Ajedrez UPM", -1, -1);
 
 		glPushMatrix();
 		glTranslatef(-10,1, 0.5);
