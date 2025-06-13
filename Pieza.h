@@ -2,16 +2,11 @@
 #include "Vector.h"
 #include "Casilla.h"
 #include "ETSIDI.h"
-#include<iostream>
-#include<cstring>
-
-
-using ETSIDI::Sprite;
 
 class Pieza
 {
-protected:
-	
+private:
+	/*
 	Vector posicion;
 	int estado,color;
 	Casilla fc;
@@ -42,5 +37,7 @@ public:
 	int getfila();
 	int getcolumna();
 	Casilla getCasilla();
+
+*/
 	
 };
