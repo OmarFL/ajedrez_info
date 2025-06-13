@@ -1,15 +1,12 @@
 #include "freeglut.h"
 #include "CoordinadorAjedrez.h"
 
-CoordinadorAjedrez controlador;
+coordinador juego;
 
-void OnDraw(void); //esta funcion sera llamada para dibujar
-
-void OnTimer(int value); //esta funcion sera llamada cuando transcurra una temporizacion
-
-void OnKeyboardDown(unsigned char key, int x, int y); //cuando se pulse una tecla
-void onSpecialKeyboardDown(int key, int x, int y);
-void OnMouseClick(int button, int state, int x, int y);
+void OnDraw(void); //Esta funcion sera llamada para dibujar
+void OnTimer(int value); //Esta funcion sera llamada cuando transcurra una temporizacion
+void OnKeyboardDown(unsigned char key, int x, int y); //Cuando se pulse una tecla	
+void OnMouseClick(int button, int state, int x, int y); //Control del ratón
 
 
 int main(int argc, char* argv[])
@@ -19,7 +16,7 @@ int main(int argc, char* argv[])
 	glutInit(&argc, argv);
 	glutInitWindowSize(800, 600);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutCreateWindow("MiJuego");
+	glutCreateWindow("DeleteSys32(es broma)");
 
 	//habilitar luces y definir perspectiva
 	glEnable(GL_LIGHT0);
@@ -27,22 +24,20 @@ int main(int argc, char* argv[])
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_COLOR_MATERIAL);
 	glMatrixMode(GL_PROJECTION);
-	gluPerspective(40.0, 800 / 600.0f, 0.1, 150);
+	gluPerspective(50.0, 800.0f / 600.0f, 0.1, 150);
 
 	//Registrar los callbacks
 	glutDisplayFunc(OnDraw);
 	glutTimerFunc(25, OnTimer, 0);//le decimos que dentro de 25ms llame 1 vez a la funcion OnTimer()
 	glutKeyboardFunc(OnKeyboardDown);
-	glutSpecialFunc(onSpecialKeyboardDown);
+	glutMouseFunc(OnMouseClick); //Callback del raton
 
-
-	glutMouseFunc(OnMouseClick); // Registrar callback
-	
 	//pasarle el control a GLUT,que llamara a los callbacks
 	glutMainLoop();
 
 	return 0;
 }
+
 void OnDraw(void)
 {
 	//Borrado de la pantalla	
@@ -52,14 +47,17 @@ void OnDraw(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	controlador.dibuja();
+	//funciones de dibujo
+	juego.dibuja();
 
+	//no borrar esta linea ni poner nada despues
 	glutSwapBuffers();
 }
+
 void OnKeyboardDown(unsigned char key, int x_t, int y_t)
 {
 	//poner aqui el código de teclado
-	controlador.tecla(key);
+	juego.tecla(key);
 
 	glutPostRedisplay();
 }
@@ -75,9 +73,15 @@ void onSpecialKeyboardDown(int key, int x, int y)
 	controlador.tecla(key);
 }
 
-void OnMouseClick(int button, int state, int x, int y) {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		controlador.mouse(x, y); // Delegar en el controlador
-		glutPostRedisplay(); // Redibujar
-	}
+void OnMouseClick(int b, int state, int x, int y)
+{
+	bool down = (state == GLUT_DOWN);
+
+	int specialKey = glutGetModifiers();
+	bool ctrlKey = (specialKey & GLUT_ACTIVE_CTRL) ? true : false;
+	bool sKey = specialKey & GLUT_ACTIVE_SHIFT;
+
+	juego.Boton_Raton(juego.Get_mundo().get_opon(), x, y, b, down, sKey, ctrlKey);
+
+	glutPostRedisplay();
 }
