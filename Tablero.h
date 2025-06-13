@@ -5,11 +5,11 @@
 class Tablero {
 private:
 	//Creacion del tablero
-	Vector posicion;
+	//Vector posicion;
 	Casilla casillas[10][8];
 
 public:
-	Tablero();
-	void inicializa();
+	//Tablero();
+	//void inicializa();
 	void dibuja();
 };
