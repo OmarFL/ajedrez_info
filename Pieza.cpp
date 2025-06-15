@@ -1,34 +1,15 @@
 #include "Pieza.h"
-#include "freeglut.h"
 
-/*
-void Pieza::dibuja() {
-	glColor3f(0.5f, 0.5f, 0.5f); // Color gris
-	glutSolidCube(1.0);
+Pieza::Pieza(int x, int y, int val):
+	valor(val),
+	posicion_selecc({ x, y })	
+{}
+
+Vector Pieza::Get_Posicion() {
+	return posicion_selecc;
 }
 
-
-void Pieza::setPos(int _f, int _c) {
-	fc.setCasillas(_f, _c);
-}
-
-int Pieza::getTipoPieza() {
-	return 0;
-}
-
-int Pieza::getColor() {
-	return color;
-}
-
-int Pieza::getfila() {
-	return fc.getF();
-}
-
-int Pieza::getcolumna() {
-	return fc.getC();
-}
-*/
-
-Casilla Pieza::getCasilla() {
-	return fc;
+void Pieza::Set_Posicion(int x, int y) {
+	posicion_selecc.x = x;
+	posicion_selecc.y = y;
 }
