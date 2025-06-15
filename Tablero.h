@@ -30,6 +30,19 @@ private:
 	std::vector<std::vector<int>> matriz;  // Matriz lógica del tablero (8x10)
 	std::vector<Pieza*> piezas;            // Vector de punteros a las piezas
 
+	// Variables de estado del juego
+	int mov_x_IA = -1, mov_y_IA = -1;      // Movimiento planeado por la IA
+	int posicion_selecc = -1;               // Índice de pieza seleccionada (-1=nada)
+	int pos_x = -1, pos_y = -1;            // Posición de pieza seleccionada (jugador)
+	int pos_x_IA = 0, pos_y_IA = 0;        // Posición de pieza seleccionada (IA)
+	bool color = true;                      // Turno (true=blancas, false=negras)
+
+	bool jaqblancas = false;               // Rey blanco en jaque
+	bool jaqmateblancas = false;           // Rey blanco en jaque mate
+	bool jaqnegras = false;                // Rey negro en jaque
+	bool jaqmatenegras = false;            // Rey negro en jaque mate
+	bool tablas = false;                   // Estado de empate
+
 public:
 	void dibuja();
 
