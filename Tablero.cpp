@@ -195,3 +195,79 @@ void Tablero::dibuja()
 	}
 
 }
+
+
+
+// Selecciona una pieza en la posición del ratón para moverla
+void Tablero::Seleccionar_Pieza_1VS1(Vector origen) 
+{
+	posicion_selecc = -1;	  // Resetear selección previa
+
+	if (matriz[origen.x][origen.y] != 0) {	
+		// Si hay pieza en la casilla, se busca la pieza en el vector de piezas
+
+		for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+			if (piezas[z]->Get_Posicion().x == origen.x && piezas[z]->Get_Posicion().y == origen.y) {
+				posicion_selecc = z;
+				break;
+			}
+		}
+
+		//Si la pieza no corresponde con el color del turno
+		if (posicion_selecc != -1) {
+			// Verificar turno correcto (valor negativo = negras, positivo = blancas)
+			if ((color && piezas[posicion_selecc]->Get_Valor() < 0) || (!color && piezas[posicion_selecc]->Get_Valor() > 0)) { 
+				posicion_selecc = -1;			
+			}
+
+			if (posicion_selecc != -1) {
+				pos_x = origen.x;
+				pos_y = origen.y;
+				CalcularMovimientosPosibles();
+			}
+		}
+	}
+}
+
+
+
+void Tablero::Mover_Pieza_1VS1(Vector destino) //posición del ratón -> destino
+{
+
+	if (posicion_selecc != -1) { // Si es una casilla permitida
+
+		//Deshabilitación de las limitaciones de movimiento
+		if (Selec_Mover(destino.x, destino.y, true)) { 
+
+			// Algoritmo de comer: se elimina la pieza si hay otra del oponente en el destino
+			if ((color && matriz[destino.x][destino.y] != 0) || (!color && matriz[destino.x][destino.y] != 0)) {
+
+				for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+					if (piezas[z]->Get_Posicion().x == destino.x && piezas[z]->Get_Posicion().y == destino.y) {
+
+						delete piezas[z];
+						if (z < posicion_selecc) posicion_selecc--;
+						piezas.erase(piezas.begin() + z);
+					}
+				}
+
+			}
+
+
+			piezas[posicion_selecc]->Set_Posicion(destino.x, destino.y);
+
+			//Actualización de los valores
+			matriz[destino.x][destino.y] = matriz[pos_x][pos_y];
+			matriz[pos_x][pos_y] = 0;
+
+			//Cambio de turno
+			if (color) color = false;		// Turno de las Negras
+			else color = true;			// Turno de las Blancas
+
+			
+
+		}
+		
+	posicion_selecc = -1;
+	movimientos_posibles.clear(); // Limpiar movimientos posibles
+}
