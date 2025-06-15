@@ -13,3 +13,16 @@ public:
     void Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla);  // Maneja eventos del ratón
 
 };
+// Enumeración que define los posibles estados del juego
+enum {
+    JUEGO = 0,      // Estado principal de juego
+    START,          // Pantalla de inicio
+    MENU_1C1,       // Menú para 1 jugador contra 1 jugador
+    INSTRUCC_1C1,   // Instrucciones para el modo 1C1
+    MENU_BOT,       // Menú para jugar contra la máquina
+    INSTRUCC_BOT,   // Instrucciones para el modo contra bot
+    RATON,          // Estado relacionado con interacción por ratón
+    GANA_BLANCAS,   // Estado cuando ganan las blancas
+    GANA_NEGRAS,    // Estado cuando ganan las negras
+    TABLAS          // Estado cuando hay empate
+};
