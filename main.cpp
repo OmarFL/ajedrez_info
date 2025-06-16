@@ -80,7 +80,8 @@ void OnMouseClick(int b, int state, int x, int y)
 	int specialKey = glutGetModifiers();
 	bool ctrlKey = (specialKey & GLUT_ACTIVE_CTRL) ? true : false;
 	bool sKey = specialKey & GLUT_ACTIVE_SHIFT;
-
+	
+	//Referencia a la función Boton_Raton que hay que crear en el Mundo.h (selector implícito)
 	juego.Boton_Raton(juego.Get_mundo().get_opon(), x, y, b, down, sKey, ctrlKey);
 
 	glutPostRedisplay();
