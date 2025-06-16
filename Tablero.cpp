@@ -271,3 +271,79 @@ void Tablero::Mover_Pieza_1VS1(Vector destino) //posición del ratón -> destino
 	posicion_selecc = -1;
 	movimientos_posibles.clear(); // Limpiar movimientos posibles
 }
+
+void Tablero::inicializa(const int& tipojuego)
+{
+	tipo_juego = tipojuego;
+
+	static GLuint fondoTexture = 0;
+	if (fondoTexture == 0) {
+		fondoTexture = ETSIDI::getTexture("imagenes/FONDO.png").id;
+		glBindTexture(GL_TEXTURE_2D, fondoTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
+
+	// Configuración gráfica del tablero (8x10 casillas)
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			Casillero[i][j].param_x = { j * 4 };
+			Casillero[i][j].param_y = { i * 4 };
+			Posic_Casillas[i][j] = { Casillero[i][j].param_x + 1, Casillero[i][j].param_y + 1 }; //para hallar el centro de las casillas
+			if ((i + j) & 1) {
+				// Color madera oscura para las "casillas negras"
+				Casillero[i][j].colorR = 101;
+				Casillero[i][j].colorG = 67;
+				Casillero[i][j].colorB = 33;
+			}
+			else {
+				// Color crema para las "casillas blancas"
+				Casillero[i][j].colorR = 245;
+				Casillero[i][j].colorG = 222;
+				Casillero[i][j].colorB = 179;
+			}
+		}
+	}
+
+	// Inicialización de piezas según tipo de juego
+	if (tipo_juego == 0) { 
+		matriz =
+		{
+			{ TORRE, CABALLO, ARZOBISPO, ALFIL, DAMA, REY, ALFIL, CANCILLER, CABALLO, TORRE },				//Piezas blancas
+			{ PEON, PEON, PEON, PEON, PEON , PEON, PEON, PEON, PEON, PEON},									
+	
+			// Filas vacías al inicio de la partida
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},		   
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+
+			{ -PEON, -PEON, -PEON, -PEON, -PEON, -PEON, -PEON, -PEON, -PEON, -PEON },						//Piezas negras
+			{ -TORRE, -CABALLO, -ARZOBISPO, -ALFIL, -DAMA, -REY, -ALFIL, -CANCILLER, -CABALLO, -TORRE}		
+		};
+	}
+
+	// Crear objetos Pieza según la matriz
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			if (matriz[i][j] != 0) {
+				Pieza* p = new Pieza(i, j, matriz[i][j]); 
+				piezas.push_back(p);
+			}
+		}
+	}
+
+	// Inicialización de las variables
+	mov_x_IA = -1, mov_y_IA = -1;
+	posicion_selecc = -1;
+	pos_x = -1, pos_y = -1;
+	pos_x_IA = 0, pos_y_IA = 0;
+	color = true;	    // INSTRUCCIÓN PARA QUE LAS BLANCAS EMPIECEN
+	jaqblancas = jaqmateblancas =  jaqnegras = jaqmatenegras = tablas = false;
+
+}
+
