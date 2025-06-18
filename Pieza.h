@@ -15,4 +15,7 @@ public:
 
 	Vector Get_Posicion();			//Obtiene la posición actual de la pieza
 
+	int Get_Valor();				//Obtiene el valor asignado a la pieza
+	void Cambiar_Valor(int);		//Recibe un entero que indica el nuevo valor a asignar
+
 };
