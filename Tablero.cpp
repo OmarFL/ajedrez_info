@@ -347,3 +347,68 @@ void Tablero::inicializa(const int& tipojuego)
 
 }
 
+void Tablero::Auto_Mov() {
+
+	bool verifica_mov = false;
+	
+	// Buscar pieza negra para mover
+		for (int i = 0; i < 8 && !verifica_mov; i++) {
+			for (int j = 9; j >= 0 && !verifica_mov; j--) {
+
+				if (matriz[i][j] < 0) {
+					pos_x = i;
+					pos_y = j;
+
+					// Encontrar la pieza en el vector
+					for (int z = 0; z < static_cast<int>(piezas.size()); z++) { 
+						if (piezas[z]->Get_Posicion().x == pos_x && piezas[z]->Get_Posicion().y == pos_y) {
+							posicion_selecc = z;
+							break;
+						}
+					}
+
+					// Buscar movimiento válido
+					for (int l = 0; l < 8 && !verifica_mov; l++) {
+						for (int k = 0; k < 10 && !verifica_mov; k++) {
+
+							if (Selec_Mover(l, k, true)) {
+								mov_x_IA = l;
+								mov_y_IA = k;
+								verifica_mov = true;
+								
+							}
+						}
+
+					}
+
+				}
+			}
+		}
+		ETSIDI::play("sonidos/mover.wav");
+
+		// Comer pieza blanca si es necesario
+		if (matriz[mov_x_IA][mov_y_IA] > 0) {
+			for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+				if (piezas[z]->Get_Posicion().x == mov_x_IA && piezas[z]->Get_Posicion().y == mov_y_IA) {
+					ETSIDI::play("sonidos/ComerPieza.wav");
+					delete piezas[z];
+					if (z < posicion_selecc) posicion_selecc--;
+					piezas.erase(piezas.begin() + z);
+				}
+			}
+		}
+
+		// Realizar movimiento
+		Coronar(posicion_selecc, pos_x, pos_y, { mov_x_IA, mov_y_IA });
+		piezas[posicion_selecc]->Set_Posicion(mov_x_IA, mov_y_IA);
+
+		//Actualización de los valores
+		matriz[mov_x_IA][mov_y_IA] = matriz[pos_x][pos_y];
+		matriz[pos_x][pos_y] = 0;
+
+		Comprobar_Jaque();		// Verificación de jaque
+		color = true;			// Turno de las blancas
+		Comprobar_JaqueMate();	// Comprobar si el jugador esta en jaque mate
+		posicion_selecc = -1;
+
+}
