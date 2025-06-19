@@ -49,5 +49,6 @@ public:
 	void Seleccionar_Pieza_1VS1(Vector origen);  // Selecciona pieza en coordenadas
 	void Mover_Pieza_1VS1(Vector destino);       // Mueve pieza a coordenadas
 	void inicializa(const int& tipojuego); // Inicializa tablero según modo de juego
+	void Auto_Mov(); 
 
 };
