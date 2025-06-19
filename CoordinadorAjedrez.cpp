@@ -234,3 +234,9 @@ void coordinador::tecla(unsigned char key) {
 		break;
 	}
 }
+
+
+void coordinador::Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla) {
+	num_rival = mundo.get_opon();
+	if (estado == 0)mundo.Boton_Raton(num_rival, x, y, boton, abajo, espacio, ref_tecla);
+}
