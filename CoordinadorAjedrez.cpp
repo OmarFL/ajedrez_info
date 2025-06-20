@@ -4,121 +4,126 @@ void coordinador::dibuja() {
 	gluLookAt(15, 18, 48,    // ubicación inicial del ojo (perspectiva)
 		15, 18, 0,			 // punto hacia el que mira el ojo
 		0.0, 1.0, 0.0);      // orientación hacia el eje Y+ 
+	switch (estado)
+	{
+	
+	case START:
 
-//ESTADOS
-	switch(estado){
-		case START:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/pantalla_principal.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+
+	case MENU_1C1:
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/pvp_menu.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+
+	case INSTRUCC_1C1:
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/pvp_intrucciones.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
 	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
+	case MENU_BOT:
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/bot_menu.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+
+	case INSTRUCC_BOT:
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/bot_instrucciones.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
 	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
+	case RATON:
 		
-		case MENU_1C1:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			//JUGAR CON LOS VÉRTICES HASTA ATINAR
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
-	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
-		
-		case RATON:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
-	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
-		
-		case GANA_NEGRAS:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
-	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
-				case GANA_BLANCAS:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
-	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
-		
-		case TABLAS:
-			glEnable(GL_TEXTURE_2D);
-			glDisable(GL_LIGHTING);
-	
-			glBegin(GL_POLYGON);
-			glColor3f(1, 1, 1);
-			
-			glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
-			glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
-			glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
-			glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
-			glEnd();
-	
-			glEnable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
-			break;
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/jugabilidad.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
 
-		case JUEGO:
 
-			mundo.dibuja();
+	case JUEGO:
 
-			if (mundo.get_Jaques() != 0) {
+		mundo.dibuja();
 
-				mundo.borrar();
+		if (mundo.get_Jaques() != 0) {
+
+			mundo.borrar();
 
 			switch (mundo.get_Jaques()) {
-				case 1:
+			case 1:
 				estado = GANA_NEGRAS;
 				break;
 			case 2:
@@ -127,14 +132,67 @@ void coordinador::dibuja() {
 			case 3:
 				estado = TABLAS;
 				break;
+			}
 		}
-	}
 
-			break;
+		break;
 
-		default:
-			break;
-		
+	default:
+		break;
+
+
+	case GANA_BLANCAS:
+		ETSIDI::play("sonidos/Victoria.wav");
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/gana_blancas.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+
+	case GANA_NEGRAS:
+		ETSIDI::play("sonidos/Derrota.wav");
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/gana_negras.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
+
+
+	case TABLAS:
+		ETSIDI::play("sonidos/tablas.wav");
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D,
+			ETSIDI::getTexture("imagenes/tablas_.png").id);
+		glDisable(GL_LIGHTING);
+		glBegin(GL_POLYGON);
+		glColor3f(1, 1, 1);
+		glTexCoord2d(0, 0); glVertex2d(-15, 41); //Esquina izquierda superior
+		glTexCoord2d(0, 1); glVertex2d(-15, -4.5); //Esquina izquierda inferior
+		glTexCoord2d(1, 1); glVertex2d(45, -4.5); //Esquina derecha inferior
+		glTexCoord2d(1, 0); glVertex2d(45, 41); //Esquina derecha superior
+		glEnd();
+		glEnable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		break;
 	}
 }
 
