@@ -1,16 +1,22 @@
 #pragma once
 #include "Tablero.h"
 #include "ETSIDI.h"
+#include "mundo.h"
 
 
 class coordinador {
     Mundo mundo;        // Objeto que representa el mundo/entorno del juego
-    
+    int estado = 1;     // Variable que almacena el estado actual del juego (inicializado a 1)
+
 public:
 
     void dibuja();      // Método para renderizar/dibujar el juego
     void tecla(unsigned char key);  // Maneja eventos de teclado
     void Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla);  // Maneja eventos del ratón
+
+    // Métodos de acceso (getters):
+    int Get_Estado() { return estado; }     // Devuelve el estado actual del juego
+    Mundo Get_mundo() { return mundo; }     // Devuelve el objeto mundo
 
 };
 // Enumeración que define los posibles estados del juego
