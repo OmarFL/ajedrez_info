@@ -43,6 +43,13 @@ private:
 	bool jaqmatenegras = false;            // Rey negro en jaque mate
 	bool tablas = false;                   // Estado de empate
 
+	// Colores para interfaz
+	int colorR, colorG, colorB;            // Color indicador de turno
+	int colorJR, colorJG, colorJB;         // Color para resaltar jugadas
+
+	// Tipos de piezas
+	enum { REY = 1, DAMA, ALFIL, CABALLO, TORRE, PEON, ARZOBISPO, CANCILLER };
+
 public:
 	void dibuja();
 
@@ -50,5 +57,12 @@ public:
 	void Mover_Pieza_1VS1(Vector destino);       // Mueve pieza a coordenadas
 	void inicializa(const int& tipojuego); // Inicializa tablero según modo de juego
 	void Auto_Mov(); 
+
+
+	// Lógica de movimientos por tipo de pieza
+	bool Selec_Peon(int, int);            // Valida movimiento de peón
+	bool Selec_Rey(int, int);             // Valida movimiento de rey
+	bool Selec_Alfil(int, int);           // Valida movimiento de alfil
+	
 
 };
