@@ -413,6 +413,13 @@ void Tablero::Auto_Mov() {
 
 }
 
+
+bool Tablero::Consultar_Turno() {
+	return color;
+}
+
+
+
 bool Tablero::Selec_Peon(int i, int j) {
 	bool sol = false;
 
@@ -503,4 +510,34 @@ bool Tablero::Selec_Arzobispo(int i, int j) {
 bool Tablero::Selec_Canciller(int i, int j) {
 	if (Selec_Torre(i, j) || Selec_Caballo(i, j))return true;
 	return false;
+}
+
+void Tablero::Coronar(int posicion_selecc, int pos_x, int pos_y, Vector destino) {
+	// Coronar peón blanco (llegada a fila 7)
+	if (destino.x == 7 && piezas[posicion_selecc]->Get_Valor() == PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(DAMA);
+		matriz[pos_x][pos_y] = DAMA;
+	}
+	// Coronar peón negro (llegada a fila 0)
+	else if (destino.x == 0 && piezas[posicion_selecc]->Get_Valor() == -PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(-DAMA);
+		matriz[pos_x][pos_y] = -DAMA;
+	}
+}
+
+
+
+void Tablero::Borrar() {
+	//Eliminar todas las piezas del tablero y reiniciar la matriz de juego
+	for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+		delete piezas[z];
+	}
+	piezas.clear();  // Vaciar el vector
+
+	// Limpiar la matriz
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			matriz[i][j] = 0;
+		}
+	}
 }
