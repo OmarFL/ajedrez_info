@@ -26,4 +26,22 @@ public:
 	// Gestiona eventos de ratón para interacción con el tablero
 	void Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla);
 
+	// Verifica estados de finalización de partida:
+	// 1 = jaque mate a blancas, 2 = jaque mate a negras, 3 = tablas, 0 = juego activo
+	int get_Jaques() {
+		if (tablero.Get_JaqueMateBlancas()) {
+			return 1;
+		}
+		else if (tablero.Get_JaqueMateNegras()) {
+			return 2;
+		}
+		else if (tablero.Get_Tablas()) {
+			return 3;
+		}
+		return 0;
+	}
+
+	// Reinicia el tablero para nueva partida
+	void borrar() { tablero.Borrar(); }
+
 };
