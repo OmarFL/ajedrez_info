@@ -68,4 +68,22 @@ public:
 	bool Selec_Caballo(int, int);         // Valida movimiento de caballo
 	bool Selec_Arzobispo(int, int);       // Valida movimiento de arzobispo
 	bool Selec_Canciller(int, int);       // Valida movimiento de canciller
+
+	// Lógica del juego
+	bool color_check(int R, int G, int B); // Verifica color de casilla
+	bool Consultar_Turno();               // Devuelve turno actual
+	void Coronar(int, int, int, Vector);  // Maneja coronación de peones
+
+	// Getters y setters
+	void Set_Oponente(const int& TIPO_OPON) { tipo_oponente = TIPO_OPON; }
+	int Get_Oponente() { return tipo_oponente; }
+
+
+
+	void Borrar();
+
+	
+	friend class Mundo;	  //Declaración de amistad para la clase Mundo
+
+
 };
