@@ -73,12 +73,38 @@ public:
 	bool color_check(int R, int G, int B); // Verifica color de casilla
 	bool Consultar_Turno();               // Devuelve turno actual
 	void Coronar(int, int, int, Vector);  // Maneja coronación de peones
+	bool Jaque(bool col);                 // Comprueba jaque para un color
+	void Comprobar_Jaque();               // Detecta situaciones de jaque
+	void Comprobar_JaqueMate();           // Detecta jaque mate
 
 	// Getters y setters
 	void Set_Oponente(const int& TIPO_OPON) { tipo_oponente = TIPO_OPON; }
 	int Get_Oponente() { return tipo_oponente; }
 
+	// Estados de juego
+	bool Get_JaqueBlancas() { 
+		return jaqblancas; 
+	}
 
+	bool Get_JaqueMateBlancas() {
+		if (jaqmateblancas && jaqblancas)
+			return true;
+		return false;
+	}
+
+	bool Get_JaqueNegras() { 
+		return jaqnegras; 
+	}
+
+	bool Get_JaqueMateNegras() {
+		if (jaqmatenegras && jaqnegras)
+			return true;
+		return false;
+	}
+
+	bool Get_Tablas() { 
+		return tablas; 
+	}
 
 	void Borrar();
 
