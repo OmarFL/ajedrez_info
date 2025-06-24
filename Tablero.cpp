@@ -526,6 +526,68 @@ void Tablero::Coronar(int posicion_selecc, int pos_x, int pos_y, Vector destino)
 }
 
 
+//Verifica si el jugador actual está en Jaque Mate o no
+void Tablero::Comprobar_JaqueMate() {
+	bool esJaqueMate = true;
+	bool escapeEncontrado = false;
+
+	// Verificar todas las piezas del jugador en turno
+	for (int i = 0; i < 8 && !escapeEncontrado; i++) {
+		for (int j = 0; j < 10 && !escapeEncontrado; j++) {
+			if ((color && matriz[i][j] > 0) || (!color && matriz[i][j] < 0)) {
+				pos_x = i; pos_y = j;
+
+
+				for (int l = 0; l < 8 && !escapeEncontrado; l++) {
+					for (int k = 0; k < 10 && !escapeEncontrado; k++) {
+						if (Selec_Mover(l, k, true)) { 
+							esJaqueMate = false;
+							escapeEncontrado = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Actualizar estado de jaque mate
+	if (esJaqueMate) {
+		if (color) {
+			jaqmateblancas = true;
+		}
+		else {
+			jaqmatenegras = true;
+		}
+	}
+	else {
+		jaqmateblancas = jaqmatenegras = false;
+	}
+
+	// Verificar tablas
+	if ((jaqmatenegras && !jaqnegras) || (jaqmateblancas && !jaqblancas)) {
+		tablas = true;
+	}
+}
+
+
+void Tablero::Comprobar_Jaque() {
+
+	if (Jaque(!color)) {
+		if (color) {
+			jaqnegras = true;
+		}
+		else {
+			jaqblancas = true;
+		}
+	}
+	else {
+		if (color)
+			jaqnegras = false;
+		else
+			jaqblancas = false;
+	}
+
+}
 
 void Tablero::Borrar() {
 	//Eliminar todas las piezas del tablero y reiniciar la matriz de juego
