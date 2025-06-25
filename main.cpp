@@ -71,10 +71,6 @@ void OnTimer(int value)
 	glutPostRedisplay();
 }
 
-void onSpecialKeyboardDown(int key, int x, int y)
-{
-	controlador.tecla(key);
-}
 
 void OnMouseClick(int b, int state, int x, int y)
 {
