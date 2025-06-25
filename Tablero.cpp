@@ -347,3 +347,259 @@ void Tablero::inicializa(const int& tipojuego)
 
 }
 
+void Tablero::Auto_Mov() {
+
+	bool verifica_mov = false;
+	
+	// Buscar pieza negra para mover
+		for (int i = 0; i < 8 && !verifica_mov; i++) {
+			for (int j = 9; j >= 0 && !verifica_mov; j--) {
+
+				if (matriz[i][j] < 0) {
+					pos_x = i;
+					pos_y = j;
+
+					// Encontrar la pieza en el vector
+					for (int z = 0; z < static_cast<int>(piezas.size()); z++) { 
+						if (piezas[z]->Get_Posicion().x == pos_x && piezas[z]->Get_Posicion().y == pos_y) {
+							posicion_selecc = z;
+							break;
+						}
+					}
+
+					// Buscar movimiento válido
+					for (int l = 0; l < 8 && !verifica_mov; l++) {
+						for (int k = 0; k < 10 && !verifica_mov; k++) {
+
+							if (Selec_Mover(l, k, true)) {
+								mov_x_IA = l;
+								mov_y_IA = k;
+								verifica_mov = true;
+								
+							}
+						}
+
+					}
+
+				}
+			}
+		}
+		ETSIDI::play("sonidos/mover.wav");
+
+		// Comer pieza blanca si es necesario
+		if (matriz[mov_x_IA][mov_y_IA] > 0) {
+			for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+				if (piezas[z]->Get_Posicion().x == mov_x_IA && piezas[z]->Get_Posicion().y == mov_y_IA) {
+					ETSIDI::play("sonidos/ComerPieza.wav");
+					delete piezas[z];
+					if (z < posicion_selecc) posicion_selecc--;
+					piezas.erase(piezas.begin() + z);
+				}
+			}
+		}
+
+		// Realizar movimiento
+		Coronar(posicion_selecc, pos_x, pos_y, { mov_x_IA, mov_y_IA });
+		piezas[posicion_selecc]->Set_Posicion(mov_x_IA, mov_y_IA);
+
+		//Actualización de los valores
+		matriz[mov_x_IA][mov_y_IA] = matriz[pos_x][pos_y];
+		matriz[pos_x][pos_y] = 0;
+
+		Comprobar_Jaque();		// Verificación de jaque
+		color = true;			// Turno de las blancas
+		Comprobar_JaqueMate();	// Comprobar si el jugador esta en jaque mate
+		posicion_selecc = -1;
+
+}
+
+
+bool Tablero::Consultar_Turno() {
+	return color;
+}
+
+
+
+bool Tablero::Selec_Peon(int i, int j) {
+	bool sol = false;
+
+	if (color) { //blancas
+		if (matriz[i][j] == 0 && j == pos_y && i == (pos_x + 1) ) { sol = true; } //movimiento sin comer
+		if (matriz[i][j] != 0 && (j == (pos_y + 1) || j == (pos_y - 1)) && i == (pos_x + 1)) {sol = true;} //movimiento comiendo
+	}
+	else{ //negras
+		if (matriz[i][j] == 0 && j == pos_y && i == (pos_x - 1)) { sol = true; } //movimiento sin comer
+		if (matriz[i][j] != 0 && (j == (pos_y + 1) || j == (pos_y - 1)) && i == (pos_x - 1)) { sol = true; }; //movimiento comiendo
+	}
+	return sol;
+}
+
+bool Tablero::Selec_Rey(int i, int j) {
+	bool sol = false;
+	if (matriz[i][j] == 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2) ) { sol = true; }                       
+	if (color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Blanco
+	if (!color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Negro
+	return sol;
+}
+
+bool Tablero::Selec_Alfil(int i, int j) { 
+	if (abs(pos_y - j) == abs(pos_x - i)) {
+		int valorii = (pos_x - i < 0 ? 1 : -1);
+		int valorjj = (pos_y - j < 0 ? 1 : -1);
+		int ii = pos_x;
+		int jj = pos_y;
+
+		while (ii != i - valorii && jj != j - valorjj) {
+			ii += valorii;
+			jj += valorjj;
+			if (ii < 0 || jj < 0)return false;
+			else if (matriz[ii][jj] != 0)return false;
+		}
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		else if (!color && matriz[i][j] != 0)return true;
+	}
+	return false;
+}
+
+bool Tablero::Selec_Caballo(int i, int j) {
+	bool sol = false;
+	if (color) {
+		if (((abs(pos_x - i) == 2 && abs(pos_y - j) == 1) || (abs(pos_x - i) == 1) && abs(pos_y - j) == 2)) sol = true;
+	}
+	else {
+		if (((abs(pos_x - i) == 2 && abs(pos_y - j) == 1) || (abs(pos_x - i) == 1) && abs(pos_y - j) == 2)) sol = true;
+	}
+	return sol;
+}
+
+bool Tablero::Selec_Torre(int i, int j) {
+	if (pos_y == j) {
+
+		for (int ii = std::min(pos_x, i) + 1; ii < std::max(pos_x, i); ii++) {
+			if (matriz[ii][pos_y] != 0) return false;
+		}
+
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		if (!color && matriz[i][j] != 0)return true;
+	}
+	if (pos_x == i) {
+
+		for (int jj = std::min(pos_y, j) + 1; jj < std::max(pos_y, j); jj++) {
+			if (matriz[pos_x][jj] != 0) return false;
+		}
+
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		if (!color && matriz[i][j] != 0) return true;
+	}
+	return false;
+}
+
+bool Tablero::Selec_Dama(int i, int j) {
+	if (Selec_Torre(i, j) || Selec_Alfil(i, j))return true;
+	return false;
+}
+
+bool Tablero::Selec_Arzobispo(int i, int j) {
+	if (Selec_Caballo(i, j) || Selec_Alfil(i, j))return true;
+	return false;
+}
+
+bool Tablero::Selec_Canciller(int i, int j) {
+	if (Selec_Torre(i, j) || Selec_Caballo(i, j))return true;
+	return false;
+}
+
+void Tablero::Coronar(int posicion_selecc, int pos_x, int pos_y, Vector destino) {
+	// Coronar peón blanco (llegada a fila 7)
+	if (destino.x == 7 && piezas[posicion_selecc]->Get_Valor() == PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(DAMA);
+		matriz[pos_x][pos_y] = DAMA;
+	}
+	// Coronar peón negro (llegada a fila 0)
+	else if (destino.x == 0 && piezas[posicion_selecc]->Get_Valor() == -PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(-DAMA);
+		matriz[pos_x][pos_y] = -DAMA;
+	}
+}
+
+
+//Verifica si el jugador actual está en Jaque Mate o no
+void Tablero::Comprobar_JaqueMate() {
+	bool esJaqueMate = true;
+	bool escapeEncontrado = false;
+
+	// Verificar todas las piezas del jugador en turno
+	for (int i = 0; i < 8 && !escapeEncontrado; i++) {
+		for (int j = 0; j < 10 && !escapeEncontrado; j++) {
+			if ((color && matriz[i][j] > 0) || (!color && matriz[i][j] < 0)) {
+				pos_x = i; pos_y = j;
+
+
+				for (int l = 0; l < 8 && !escapeEncontrado; l++) {
+					for (int k = 0; k < 10 && !escapeEncontrado; k++) {
+						if (Selec_Mover(l, k, true)) { 
+							esJaqueMate = false;
+							escapeEncontrado = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Actualizar estado de jaque mate
+	if (esJaqueMate) {
+		if (color) {
+			jaqmateblancas = true;
+		}
+		else {
+			jaqmatenegras = true;
+		}
+	}
+	else {
+		jaqmateblancas = jaqmatenegras = false;
+	}
+
+	// Verificar tablas
+	if ((jaqmatenegras && !jaqnegras) || (jaqmateblancas && !jaqblancas)) {
+		tablas = true;
+	}
+}
+
+
+void Tablero::Comprobar_Jaque() {
+
+	if (Jaque(!color)) {
+		if (color) {
+			jaqnegras = true;
+		}
+		else {
+			jaqblancas = true;
+		}
+	}
+	else {
+		if (color)
+			jaqnegras = false;
+		else
+			jaqblancas = false;
+	}
+
+}
+
+void Tablero::Borrar() {
+	//Eliminar todas las piezas del tablero y reiniciar la matriz de juego
+	for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+		delete piezas[z];
+	}
+	piezas.clear();  // Vaciar el vector
+
+	// Limpiar la matriz
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			matriz[i][j] = 0;
+		}
+	}
+}

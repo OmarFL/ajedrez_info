@@ -43,11 +43,73 @@ private:
 	bool jaqmatenegras = false;            // Rey negro en jaque mate
 	bool tablas = false;                   // Estado de empate
 
+	// Colores para interfaz
+	int colorR, colorG, colorB;            // Color indicador de turno
+	int colorJR, colorJG, colorJB;         // Color para resaltar jugadas
+
+	// Tipos de piezas
+	enum { REY = 1, DAMA, ALFIL, CABALLO, TORRE, PEON, ARZOBISPO, CANCILLER };
+
 public:
 	void dibuja();
 
 	void Seleccionar_Pieza_1VS1(Vector origen);  // Selecciona pieza en coordenadas
 	void Mover_Pieza_1VS1(Vector destino);       // Mueve pieza a coordenadas
 	void inicializa(const int& tipojuego); // Inicializa tablero según modo de juego
+	void Auto_Mov(); 
+
+
+	// Lógica de movimientos por tipo de pieza
+	bool Selec_Peon(int, int);            // Valida movimiento de peón
+	bool Selec_Rey(int, int);             // Valida movimiento de rey
+	bool Selec_Alfil(int, int);           // Valida movimiento de alfil
+	bool Selec_Dama(int, int);            // Valida movimiento de dama
+	bool Selec_Torre(int, int);           // Valida movimiento de torre
+	bool Selec_Caballo(int, int);         // Valida movimiento de caballo
+	bool Selec_Arzobispo(int, int);       // Valida movimiento de arzobispo
+	bool Selec_Canciller(int, int);       // Valida movimiento de canciller
+
+	// Lógica del juego
+	bool color_check(int R, int G, int B); // Verifica color de casilla
+	bool Consultar_Turno();               // Devuelve turno actual
+	void Coronar(int, int, int, Vector);  // Maneja coronación de peones
+	bool Jaque(bool col);                 // Comprueba jaque para un color
+	void Comprobar_Jaque();               // Detecta situaciones de jaque
+	void Comprobar_JaqueMate();           // Detecta jaque mate
+
+	// Getters y setters
+	void Set_Oponente(const int& TIPO_OPON) { tipo_oponente = TIPO_OPON; }
+	int Get_Oponente() { return tipo_oponente; }
+
+	// Estados de juego
+	bool Get_JaqueBlancas() { 
+		return jaqblancas; 
+	}
+
+	bool Get_JaqueMateBlancas() {
+		if (jaqmateblancas && jaqblancas)
+			return true;
+		return false;
+	}
+
+	bool Get_JaqueNegras() { 
+		return jaqnegras; 
+	}
+
+	bool Get_JaqueMateNegras() {
+		if (jaqmatenegras && jaqnegras)
+			return true;
+		return false;
+	}
+
+	bool Get_Tablas() { 
+		return tablas; 
+	}
+
+	void Borrar();
+
+	
+	friend class Mundo;	  //Declaración de amistad para la clase Mundo
+
 
 };

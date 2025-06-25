@@ -16,4 +16,5 @@ public:
 
 	void inicializa(int tipo_juego, const int& num_rival);
 	void dibuja();
+        int get_opon() { return tablero.Get_Oponente(); }
 }
