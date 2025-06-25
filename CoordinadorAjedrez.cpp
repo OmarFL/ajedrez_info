@@ -206,24 +206,29 @@ void coordinador::tecla(unsigned char key) {
 	case START:
 		if (key == 'p' || key == 'P') {
 			estado = MENU_1C1;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 		if (key == 'b' || key == 'B') {
-			estado = MENU_BOT;	
+			estado = MENU_BOT;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 		break;
 		
 	case MENU_1C1:
 		if (key == 'i' || key == 'I') {
 			estado = INSTRUCC_1C1;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 		else if (key == ' ') {
 			mundo.inicializa(0, 0);
 			estado = RATON;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 
 		break;
 	case INSTRUCC_1C1:
 		if (key == 'i' || key == 'I') {
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = MENU_1C1;
 		}
 		break;
@@ -231,15 +236,18 @@ void coordinador::tecla(unsigned char key) {
 	case MENU_BOT:
 		if (key == 'i' || key == 'I') {
 			estado = INSTRUCC_BOT;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 		else if (key == ' ') {
 			mundo.inicializa(0, 1);
 			estado = RATON;
+			ETSIDI::play("sonidos/Seleccion.wav");
 		}
 
 		break;
 	case INSTRUCC_BOT:
 		if (key == 'i' || key == 'I') {
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = MENU_BOT;
 		}
 		break;
@@ -248,6 +256,8 @@ void coordinador::tecla(unsigned char key) {
 	
 	case RATON:
 		if (key == ' ') {
+
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = JUEGO;
 		}
 		break;
@@ -258,6 +268,7 @@ void coordinador::tecla(unsigned char key) {
 	case GANA_BLANCAS:
 		if (key == 'a' || key == 'A')
 		{
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = START;
 		}
 		if (key == 'q' || key == 'Q')
@@ -269,6 +280,7 @@ void coordinador::tecla(unsigned char key) {
 	case GANA_NEGRAS:
 		if (key == 'a' || key == 'A')
 		{
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = START;
 		}
 		if (key == 'q' || key == 'Q')
@@ -280,6 +292,7 @@ void coordinador::tecla(unsigned char key) {
 	case TABLAS:
 		if (key == 'a' || key == 'A')
 		{
+			ETSIDI::play("sonidos/Seleccion.wav");
 			estado = START;
 		}
 		if (key == 'q' || key == 'Q')
