@@ -64,6 +64,9 @@ void OnKeyboardDown(unsigned char key, int x_t, int y_t)
 
 void OnTimer(int value)
 {
+	// Música de fondo 
+	ETSIDI::play("sonidos/MusicaFondo.wav");
+
 	glutTimerFunc(25, OnTimer, 0);
 	glutPostRedisplay();
 }
