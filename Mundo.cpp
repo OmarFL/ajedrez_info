@@ -1,5 +1,12 @@
-#include "Mundo.h"
+#include "mundo.h"
 #include <iostream>
+#include <vector>
+#include "freeglut.h"
+#include <ETSIDI.h>
+#include "Tablero.h"
+#include "Pieza.h"
+#include <thread>  
+#include <chrono>  
 
 using namespace std;
 
@@ -15,6 +22,9 @@ void Mundo::inicializa(int tipo_juego, const int& num_rival)
 	tablero.inicializa(tipo_juego);  // Prepara el tablero según el modo de juego
 	tablero.Set_Oponente(num_rival); // Establece el tipo de oponente
 }
+
+
+
 void Mundo::Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla) 
 {
 
