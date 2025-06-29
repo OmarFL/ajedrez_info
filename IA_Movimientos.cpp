@@ -4,7 +4,15 @@
 #include "Tablero.h"
 #include "mundo.h"
 #include <iostream>
-
+#include <chrono>
+#include <thread>
+#include <vector>
+#include <random>
+#include <algorithm> 
+#include <tuple>
+#include <cstdlib> 
+#include <ctime>  
+#include <set>
 /*-------------------------------------------------DIFICULTAD FÁCIL---------------------------------------------------------*/
 
 void IA_Facil::mover(Tablero& tablero) {
