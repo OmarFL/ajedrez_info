@@ -270,3 +270,217 @@ int IA_Facil::getMovX() const { return mov_x_IA; }
 int IA_Facil::getMovY() const { return mov_y_IA; }
 bool IA_Facil::getVerificaMov() const { return verifica_mov; }
 int IA_Facil::getPosicionSelecc() const { return posicion_selecc; }
+
+
+void IA_Dificil::mover(Tablero& tablero) {
+    contadorTurnos++;
+    actualizarFaseJuego(tablero);
+    const bool esNegras = true;  // La IA siempre juega con piezas negras
+
+    verifica_mov = false;
+    auto& matriz = tablero.getMatriz();
+    auto& piezas = tablero.getPiezas();
+    std::vector<tuple<int, int, int, int, int>> allMoves;
+    std::vector<float> puntuaciones;
+    std::vector<std::tuple<int, int, int, int>> historialMovimientos;
+
+    //Movimientos válidos
+    allMoves = generarTodosMovimientos(tablero, true);
+
+    if (allMoves.empty()) {
+        verifica_mov = false;
+        return;
+    }
+
+    puntuaciones.resize(allMoves.size(), 0.0f);
+
+    //Evaluar cada movimiento
+    for (size_t i = 0; i < allMoves.size(); i++) {
+        auto& move = allMoves[i];
+        int indice_pieza = std::get<0>(move);
+        int origen_x = std::get<1>(move);
+        int origen_y = std::get<2>(move);
+        int dest_x = std::get<3>(move);
+        int dest_y = std::get<4>(move);
+        int tipoPieza = abs(matriz[origen_x][origen_y]);
+        int valorPieza = obtenerValorPieza(tipoPieza);
+
+        float puntuacion = 0.0f;
+
+        //Capturar piezas enemigas
+        if (matriz[dest_x][dest_y] > 0) { // Pieza blanca (enemiga)
+            int valorCaptura = obtenerValorPieza(matriz[dest_x][dest_y]);
+
+            // Bonus enorme por capturar (especialmente piezas valiosas)
+            puntuacion += 100 + valorCaptura * 10;
+
+            // Bonus adicional por capturar con pieza de menor valor
+            if (valorCaptura > valorPieza) {
+                puntuacion += (valorCaptura - valorPieza) * 20;
+            }
+        }
+
+        //Penalización severa por movimientos repetitivos
+        if (contadorTurnos > 10) { // Solo aplicar después de la apertura
+            for (const auto& mov : historialMovimientos) {
+                if (mov == std::make_tuple(origen_x, origen_y, dest_x, dest_y)) {
+                    puntuacion -= 200; // Penalización extrema
+                    break;
+                }
+            }
+        }
+
+        //Bonus por desarrollo en apertura
+        if (faseActual == APERTURA) {
+            // Bonus por sacar piezas del fondo
+            if (origen_x == 0 && dest_x > 1) {
+                puntuacion += 30;
+            }
+
+            // Bonus por control del centro
+            if (dest_x >= 3 && dest_x <= 4 && dest_y >= 4 && dest_y <= 5) {
+                puntuacion += 20;
+            }
+        }
+
+        //Penalización por pasividad
+        if (dest_x == origen_x && abs(dest_y - origen_y) < 2) {
+            puntuacion -= 15; // Movimientos laterales cortos
+        }
+
+        //Bonus por avanzar piezas en medio juego y final
+        if (faseActual != APERTURA) {
+            if (dest_x > origen_x) { // Avanzar hacia el territorio enemigo
+                puntuacion += (dest_x - origen_x) * 5;
+            }
+        }
+
+        puntuaciones[i] = puntuacion;
+    }
+
+    //Seleccionar el mejor movimiento
+    int indiceElegido = 0;
+    float maxPuntuacion = puntuaciones[0];
+    for (size_t i = 1; i < puntuaciones.size(); i++) {
+        if (puntuaciones[i] > maxPuntuacion) {
+            maxPuntuacion = puntuaciones[i];
+            indiceElegido = i;
+        }
+    }
+
+    //Actualizar historial
+    auto& mejorMove = allMoves[indiceElegido];
+    int origen_x = std::get<1>(mejorMove);
+    int origen_y = std::get<2>(mejorMove);
+    int dest_x = std::get<3>(mejorMove);
+    int dest_y = std::get<4>(mejorMove);
+
+    historialMovimientos.push_back(std::make_tuple(origen_x, origen_y, dest_x, dest_y));
+    if (historialMovimientos.size() > 10) {
+        historialMovimientos.erase(historialMovimientos.begin());
+    }
+
+    //Realizar movimiento
+    int piece_index = std::get<0>(mejorMove);
+    tablero.setPosicionSeleccionada(origen_x, origen_y);
+    ETSIDI::play("sonidos/mover_bot.wav");
+    tablero.RealizarMovimientoIA(dest_x, dest_y, piece_index);
+}
+
+
+// función para obtener valor de pieza
+int IA_Dificil::obtenerValorPieza(int tipoPieza) {
+
+    switch (tipoPieza) {
+
+    case 1: return VALOR_PEON;       // PEON
+    case 2: return VALOR_CABALLO;    // CABALLO
+    case 3: return VALOR_ALFIL;      // ALFIL
+    case 4: return VALOR_TORRE;      // TORRE
+    case 5: return VALOR_DAMA;       // DAMA
+    case 6: return VALOR_REY;        // REY
+    case 7: return VALOR_ARZOBISPO;  // ARZOBISPO
+    case 8: return VALOR_CANCILLER;  // CANCILLER
+
+    default: return 0;
+    }
+}
+
+
+void IA_Dificil::actualizarFaseJuego(Tablero& tablero) {
+    int totalPiezas = 0;
+    auto& matriz = tablero.getMatriz();
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (matriz[i][j] != 0) totalPiezas++;
+        }
+    }
+
+    // Menos de 20 piezas = final de juego
+    if (totalPiezas < 20) {
+        faseActual = FINAL;
+    }
+    // Entre 20 y 28 piezas = medio juego
+    else if (totalPiezas < 28) {
+        faseActual = MEDIO_JUEGO;
+    }
+    // Más de 28 piezas = apertura
+    else {
+        faseActual = APERTURA;
+    }
+}
+
+vector<tuple<int, int, int, int, int>> IA_Dificil::generarTodosMovimientos(Tablero& tablero, bool esNegras) {
+    auto& matriz = tablero.getMatriz();
+    auto& piezas = tablero.getPiezas();
+    std::vector<tuple<int, int, int, int, int>> todosMovimientos;
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 10; j++) {
+            // Filtrar piezas del color correcto
+            if ((esNegras && matriz[i][j] < 0) || (!esNegras && matriz[i][j] > 0)) {
+                int temp_pos_x = tablero.getPosX();
+                int temp_pos_y = tablero.getPosY();
+
+                // Establecer posición actual para validación
+                tablero.setPosicionSeleccionada(i, j);
+
+                // Buscar índice de la pieza
+                int indice_pieza = -1;
+                for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+                    if (piezas[z]->Get_Posicion().x == i &&
+                        piezas[z]->Get_Posicion().y == j) {
+                        indice_pieza = z;
+                        break;
+                    }
+                }
+                if (indice_pieza == -1) continue;
+
+                // Buscar movimientos válidos
+                for (int x = 0; x < 8; x++) {
+                    for (int y = 0; y < 10; y++) {
+                        if (tablero.Selec_Mover(x, y, true)) {
+                            todosMovimientos.push_back(std::make_tuple(indice_pieza, i, j, x, y));
+                        }
+                    }
+                }
+
+                // Restaurar posición original
+                tablero.setPosicionSeleccionada(temp_pos_x, temp_pos_y);
+            }
+        }
+    }
+
+    return todosMovimientos;
+}
+
+
+
+int IA_Dificil::getMovX() const { return mov_x_IA; }
+int IA_Dificil::getMovY() const { return mov_y_IA; }
+bool IA_Dificil::getVerificaMov() const { return verifica_mov; }
+int IA_Dificil::getPosicionSelecc() const { return posicion_selecc; }
+
+
+
