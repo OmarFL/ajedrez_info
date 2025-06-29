@@ -17,6 +17,12 @@ public:
     // Métodos de acceso (getters):
     int Get_Estado() { return estado; }     // Devuelve el estado actual del juego
     Mundo Get_mundo() { return mundo; }     // Devuelve el objeto mundo
+    //Gestión de músicas
+    bool musicaJuegoActiva;
+    bool musicaMenuActiva;
+    //Gestión de músicas
+    bool musicaJuegoActiva;
+    bool musicaMenuActiva;
 
 };
 // Enumeración que define los posibles estados del juego
