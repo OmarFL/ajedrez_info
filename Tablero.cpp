@@ -53,10 +53,13 @@ void Tablero::dibuja()
 	glDisable(GL_TEXTURE_2D);
 
 
-
+	//---------------------Nota: NO cambiar el orden de dibujado bajo ningún concepto porque se lía parda xd---------------------
+	
 	// GESTIÓN DE LOS MOVIMIENTOS POSIBLES
 	DibujarMovimientosPosibles();
 
+	// GESTIÓN DEL MARCADOR
+	DibujarMarcadorTurno();
 
 
 	// GESTIÓN DE TODAS LAS PIEZAS:
@@ -345,6 +348,14 @@ void Tablero::inicializa(const int& tipojuego)
 	color = true;	    // INSTRUCCIÓN PARA QUE LAS BLANCAS EMPIECEN
 	jaqblancas = jaqmateblancas =  jaqnegras = jaqmatenegras = tablas = false;
 
+	// Configuración del marcador
+	marcador_x = 5.0f;
+	marcador_y = 34.0f;
+	marcador_ancho = 30.0f;
+	marcador_alto = 3.0f;
+	marcador_colorR = 50;
+	marcador_colorG = 50;
+	marcador_colorB = 50;
 }
 
 void Tablero::Auto_Mov() {
@@ -418,6 +429,147 @@ bool Tablero::Consultar_Turno() {
 	return color;
 }
 
+void Tablero::setDificultadIA(int dificultad) {
+	delete ia_actual;  // Limpiar IA anterior
+
+	switch (dificultad) {
+	case 0: ia_actual = new IA_Facil(); break;
+	case 1: ia_actual = new IA_Medio(); break;
+	case 2: ia_actual = new IA_Dificil(); break;
+	default: ia_actual = new IA_Facil();
+	}
+}
+
+void Tablero::Auto_Mov() {
+
+	if (ia_actual) {
+		// Realizar movimiento
+		ia_actual->mover(*this);
+	}
+}
+
+void Tablero::Auto_Mov_Medio() {
+
+	IA_Medio ia;
+	ia.mover(*this);
+}
+
+
+void Tablero::Auto_Mov_Dificil() {
+	IA_Dificil ia;
+	ia.mover(*this);
+}
+
+
+void Tablero::RealizarMovimientoIA(int mov_x, int mov_y, int pos_sel) {
+
+	// Comer cualquier pieza en el destino
+	if (matriz[mov_x][mov_y] != 0) {
+		for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+			if (piezas[z]->Get_Posicion().x == mov_x &&
+				piezas[z]->Get_Posicion().y == mov_y) {
+				ETSIDI::play("sonidos/ComerPieza.wav");
+				delete piezas[z];
+				if (z < pos_sel) pos_sel--;
+				piezas.erase(piezas.begin() + z);
+				break;
+			}
+		}
+	}
+
+	// Guardar posición original para coronación
+	Vector origen = piezas[pos_sel]->Get_Posicion();
+
+	// Mover la pieza
+	piezas[pos_sel]->Set_Posicion(mov_x, mov_y);
+
+	// Actualizar matriz
+	matriz[mov_x][mov_y] = matriz[origen.x][origen.y];
+	matriz[origen.x][origen.y] = 0;
+
+	// Coronar si es necesario
+	Coronar(pos_sel, origen.x, origen.y, { mov_x, mov_y });
+
+	Comprobar_Jaque();
+	color = true;  // Cambiar turno a blancas
+	Comprobar_JaqueMate();
+}
+
+
+
+bool Tablero::Selec_Mover(int i, int j, bool f) {
+	if (pos_x < 0 || pos_y < 0) return false;  // Posición inválida
+
+	bool movimientoValido = false;
+	int tipoPieza = abs(matriz[pos_x][pos_y]);
+
+	// Delegar a función específica según tipo de pieza
+	switch (tipoPieza) {
+	case PEON: movimientoValido = Selec_Peon(i, j); break;
+	case REY: movimientoValido = Selec_Rey(i, j); break;
+	case DAMA: movimientoValido = Selec_Dama(i, j); break;
+	case ALFIL: movimientoValido = Selec_Alfil(i, j); break;
+	case CABALLO: movimientoValido = Selec_Caballo(i, j); break;
+	case TORRE: movimientoValido = Selec_Torre(i, j); break;
+	case ARZOBISPO: movimientoValido = Selec_Arzobispo(i, j); break;
+	case CANCILLER: movimientoValido = Selec_Canciller(i, j); break;
+	}
+
+	// Verificar si el movimiento deja al rey en jaque
+	if (f && movimientoValido) {
+		int piezaDestino = matriz[i][j];
+		matriz[i][j] = matriz[pos_x][pos_y];
+		matriz[pos_x][pos_y] = 0;
+
+		if (Jaque(color)) {  // Si queda en jaque, movimiento inválido
+			movimientoValido = false;
+		}
+
+		// Revertir movimiento simulado
+		matriz[pos_x][pos_y] = matriz[i][j];
+		matriz[i][j] = piezaDestino;
+	}
+
+	return movimientoValido;
+}
+
+//Verifica si el color del rey especificado está en jaque o no
+bool Tablero::Jaque(bool col) {
+	int rey_i = 0, rey_j = 0;
+
+	// Buscar posición del rey
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			if ((col && matriz[i][j] == REY) || (!col && matriz[i][j] == -REY)) {
+				rey_i = i; rey_j = j;
+				break;
+			}
+		}
+	}
+
+	// Verificar si alguna pieza enemiga puede capturar al rey
+	bool turnoOriginal = color;
+	color = !col;  // Cambiar temporalmente el turno para verificar desde perspectiva del oponente
+	int temp_x = pos_x, temp_y = pos_y;
+
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			if ((col && matriz[i][j] < 0) || (!col && matriz[i][j] > 0)) {
+				pos_x = i; pos_y = j;
+				if (Selec_Mover(rey_i, rey_j, false)) {  // Verificar si puede capturar al rey
+					pos_x = temp_x; pos_y = temp_y;
+					color = turnoOriginal;
+					return true;
+				}
+			}
+		}
+	}
+
+	// Restaurar valores originales
+	pos_x = temp_x; pos_y = temp_y;
+	color = turnoOriginal;
+	return false;
+}
 
 
 bool Tablero::Selec_Peon(int i, int j) {
