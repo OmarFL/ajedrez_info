@@ -272,6 +272,11 @@ bool IA_Facil::getVerificaMov() const { return verifica_mov; }
 int IA_Facil::getPosicionSelecc() const { return posicion_selecc; }
 
 
+
+/*-------------------------------------------------DIFICULTAD DIFÍCIL--------------------------------------------------------*/
+
+
+
 void IA_Dificil::mover(Tablero& tablero) {
     contadorTurnos++;
     actualizarFaseJuego(tablero);
