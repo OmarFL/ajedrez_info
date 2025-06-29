@@ -50,13 +50,25 @@ private:
 	// Tipos de piezas
 	enum { REY = 1, DAMA, ALFIL, CABALLO, TORRE, PEON, ARZOBISPO, CANCILLER };
 
+	//Variables para la implementación del marcador
+	float marcador_x, marcador_y, marcador_ancho, marcador_alto;
+	int marcador_colorR, marcador_colorG, marcador_colorB;
+
+
 public:
 	void dibuja();
+	void DibujarMarcadorTurno();
 
 	void Seleccionar_Pieza_1VS1(Vector origen);  // Selecciona pieza en coordenadas
 	void Mover_Pieza_1VS1(Vector destino);       // Mueve pieza a coordenadas
+
 	void inicializa(const int& tipojuego); // Inicializa tablero según modo de juego
-	void Auto_Mov(); 
+	void Auto_Mov();  					   // Ejecuta movimiento automático de IA (modo fácil)
+	void Auto_Mov_Medio();				   // Dificultad media de la IA
+	void Auto_Mov_Dificil();			   // Dificultad difícil de la IA	
+	
+	void CalcularMovimientosPosibles(); 
+	void DibujarMovimientosPosibles();  // Método para dibujar las casillas a las que es posible moverse
 
 
 	// Lógica de movimientos por tipo de pieza
@@ -106,10 +118,13 @@ public:
 		return tablas; 
 	}
 
+	// Dificultad IA
+	void setDificultadIA(int dificultad);
+	void RealizarMovimientoIA(int mov_x, int mov_y, int pos_sel);
+
 	void Borrar();
 
 	
-	friend class Mundo;	  //Declaración de amistad para la clase Mundo
-
-
+	friend class Mundo;	  
+	friend class IA_Movimientos;
 };
