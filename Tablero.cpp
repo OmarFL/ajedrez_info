@@ -358,6 +358,61 @@ void Tablero::inicializa(const int& tipojuego)
 	marcador_colorB = 50;
 }
 
+
+
+
+void Tablero::DibujarMarcadorTurno() {
+
+	// Dibujar fondo del marcador
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	// Fondo
+	glColor3ub(marcador_colorR, marcador_colorG, marcador_colorB);
+	glBegin(GL_QUADS);
+	glVertex3f(marcador_x, marcador_y, 0);
+	glVertex3f(marcador_x + marcador_ancho, marcador_y, 0);
+	glVertex3f(marcador_x + marcador_ancho, marcador_y + marcador_alto, 0);
+	glVertex3f(marcador_x, marcador_y + marcador_alto, 0);
+	glEnd();
+
+
+	// Dibujar icono del rey
+	glEnable(GL_TEXTURE_2D);
+
+	if (color) { // Turno blancas
+		ETSIDI::Sprite rey_w = { "imagenes/rey_w.png" };
+		glPushMatrix();
+		glTranslatef(marcador_x - 4.0f, marcador_y - 0.8f, 1); // Ajusta posición
+		rey_w.setSize(4.0, 4.0);
+		rey_w.draw();
+		glPopMatrix();
+	}
+	else {   // Turno negras
+		ETSIDI::Sprite rey_b = { "imagenes/rey_b.png" };
+		glPushMatrix();
+		glTranslatef(marcador_x - 4.0f, marcador_y - 1.1f, 1); // Ajusta posición
+		rey_b.setSize(4.5, 4.5);
+		rey_b.draw();
+		glPopMatrix();
+	}
+
+
+	// Texto
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1, 1, 1);
+	ETSIDI::setFont("fuentes/Bitwise.ttf", 24);
+	ETSIDI::printxy(color ? "TURNO: BLANCAS" : "TURNO: NEGRAS",
+		marcador_x + 2, marcador_y + 1);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+}
+
+
+
+
+
 void Tablero::Auto_Mov() {
 
 	bool verifica_mov = false;
