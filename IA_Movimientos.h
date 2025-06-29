@@ -57,3 +57,36 @@ public:
    bool estaBajoAtaque(Tablero& tablero, int x, int y, bool esPiezaNegra);
 
 };
+
+class IA_Dificil : public IA_Movimientos {
+
+    int mov_x_IA;
+    int mov_y_IA;
+    bool verifica_mov;
+    int posicion_selecc;
+
+    //Valores de las piezas
+    const int VALOR_PEON = 10;
+    const int VALOR_CABALLO = 30;
+    const int VALOR_ALFIL = 30;
+    const int VALOR_ARZOBISPO = 200;
+    const int VALOR_CANCILLER = 200;
+    const int VALOR_TORRE = 50;
+    const int VALOR_DAMA = 400;
+    const int VALOR_REY = 1000;
+
+    // Estrategia basada en la fase del juego
+    enum FaseJuego { APERTURA, MEDIO_JUEGO, FINAL };
+    FaseJuego faseActual = APERTURA;
+    int contadorTurnos = 0;
+
+public:
+
+    void mover(Tablero& tablero) override;
+
+    //Métodos de acceso
+    int getMovX() const override;
+    int getMovY() const override;
+    bool getVerificaMov() const override;
+    int getPosicionSelecc() const override;
+}
