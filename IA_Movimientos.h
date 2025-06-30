@@ -105,6 +105,42 @@ public:
     // Determinar la fase actual del juego
     void actualizarFaseJuego(Tablero& tablero);
 
+
+    // Comprueba si una posición es vulnerable a captura por peones enemigos
+    bool esVulnerableAPeon(Tablero& tablero, int x, int y);
+
+    // Verifica si una posición está protegida por otro peón aliado
+    bool estaProtegidoPorPeon(Tablero& tablero, int x, int y);
+
+    // Obtiene el valor de la amenaza más pequeña que ataca una casilla
+    int valorAmenazaMinima(Tablero& tablero, int x, int y);
+};
+
+public:
+
+    void mover(Tablero& tablero) override;
+
+    //Métodos de acceso
+    int getMovX() const override;
+    int getMovY() const override;
+    bool getVerificaMov() const override;
+    int getPosicionSelecc() const override;
+
+    //Obtener valor de pieza para evaluación
+    int obtenerValorPieza(int tipoPieza);
+
+    //Verificar si una posición está bajo ataque
+    bool estaBajoAtaque(Tablero& tablero, int x, int y, bool esPiezaNegra);
+
+    //Función de evaluación mejorada
+    float evaluarPosicion(Tablero& tablero, bool esNegras);
+
+    //Generar todos los movimientos válidos
+    std::vector<std::tuple<int, int, int, int, int>> generarTodosMovimientos(Tablero& tablero, bool esNegras);
+
+    // Determinar la fase actual del juego
+    void actualizarFaseJuego(Tablero& tablero);
+
     // Comprueba si una posición es vulnerable a captura por peones enemigos
     bool esVulnerableAPeon(Tablero& tablero, int x, int y);
 
