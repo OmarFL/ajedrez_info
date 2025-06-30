@@ -276,30 +276,22 @@ int IA_Facil::getPosicionSelecc() const { return posicion_selecc; }
 /*-------------------------------------------------DIFICULTAD DIFÍCIL--------------------------------------------------------*/
 
 
-
 void IA_Dificil::mover(Tablero& tablero) {
-    contadorTurnos++;
-    actualizarFaseJuego(tablero);
-    const bool esNegras = true;  // La IA siempre juega con piezas negras
-
     verifica_mov = false;
     auto& matriz = tablero.getMatriz();
     auto& piezas = tablero.getPiezas();
-    std::vector<tuple<int, int, int, int, int>> allMoves;
-    std::vector<float> puntuaciones;
     std::vector<std::tuple<int, int, int, int>> historialMovimientos;
 
-    //Movimientos válidos
-    allMoves = generarTodosMovimientos(tablero, true);
+    // 1. Generar todos los movimientos válidos
+    vector<tuple<int, int, int, int, int>> allMoves = generarTodosMovimientos(tablero, true);
 
     if (allMoves.empty()) {
         verifica_mov = false;
         return;
     }
 
-    puntuaciones.resize(allMoves.size(), 0.0f);
-
-    //Evaluar cada movimiento
+    // 2. Evaluar cada movimiento con criterios más estrictos
+    vector<float> puntuaciones;
     for (size_t i = 0; i < allMoves.size(); i++) {
         auto& move = allMoves[i];
         int indice_pieza = std::get<0>(move);
@@ -307,90 +299,207 @@ void IA_Dificil::mover(Tablero& tablero) {
         int origen_y = std::get<2>(move);
         int dest_x = std::get<3>(move);
         int dest_y = std::get<4>(move);
+
         int tipoPieza = abs(matriz[origen_x][origen_y]);
         int valorPieza = obtenerValorPieza(tipoPieza);
+        int valorCaptura = (matriz[dest_x][dest_y] > 0) ?
+            obtenerValorPieza(matriz[dest_x][dest_y]) : 0;
 
         float puntuacion = 0.0f;
+        bool estaAmenazada = estaBajoAtaque(tablero, dest_x, dest_y, true);
 
-        //Capturar piezas enemigas
-        if (matriz[dest_x][dest_y] > 0) { // Pieza blanca (enemiga)
-            int valorCaptura = obtenerValorPieza(matriz[dest_x][dest_y]);
+        // A. EVALUACIÓN DE CAPTURAS (con protección de piezas valiosas)
+        if (valorCaptura > 0) {
+            // Bonus por capturar (mayor para piezas menores)
+            float factorCaptura = (valorPieza < VALOR_TORRE) ? 1.8f : 1.2f;
+            puntuacion += valorCaptura * factorCaptura;
 
-            // Bonus enorme por capturar (especialmente piezas valiosas)
-            puntuacion += 100 + valorCaptura * 10;
-
-            // Bonus adicional por capturar con pieza de menor valor
-            if (valorCaptura > valorPieza) {
-                puntuacion += (valorCaptura - valorPieza) * 20;
+            // Penalización EXTREMA si pieza valiosa queda expuesta
+            if (valorPieza > VALOR_TORRE && estaAmenazada) {
+                puntuacion -= valorPieza * 2.0f;  // Penalización doble del valor
             }
         }
 
-        //Penalización severa por movimientos repetitivos
-        if (contadorTurnos > 10) { // Solo aplicar después de la apertura
-            for (const auto& mov : historialMovimientos) {
-                if (mov == std::make_tuple(origen_x, origen_y, dest_x, dest_y)) {
-                    puntuacion -= 200; // Penalización extrema
-                    break;
+        // B. EVALUACIÓN DE RIESGO PARA PIEZAS VALIOSAS
+        if (valorPieza > VALOR_CABALLO) {
+            // Penalización fuerte por exponer piezas importantes
+            if (estaAmenazada) {
+                puntuacion -= valorPieza * 1.5f;
+
+                // Penalización adicional si la amenaza viene de pieza menor
+                if (valorPieza > VALOR_TORRE) {
+                    int valorAmenaza = valorAmenazaMinima(tablero, dest_x, dest_y);
+                    if (valorAmenaza < valorPieza) {
+                        puntuacion -= (valorPieza - valorAmenaza) * 1.2f;
+                    }
                 }
             }
         }
 
-        //Bonus por desarrollo en apertura
-        if (faseActual == APERTURA) {
-            // Bonus por sacar piezas del fondo
-            if (origen_x == 0 && dest_x > 1) {
+        // C. ESTRATEGIA PARA PEONES (avance seguro)
+        if (tipoPieza == 1) {
+            // Bonus por avance controlado
+            int avance = dest_x - origen_x;
+            puntuacion += avance * 2;
+
+            // Penalización MUY FUERTE si queda expuesto a captura por peón enemigo
+            if (esVulnerableAPeon(tablero, dest_x, dest_y)) {
+                puntuacion -= 100;
+            }
+
+            // Bonus extra si está protegido por otro peón
+            if (estaProtegidoPorPeon(tablero, dest_x, dest_y)) {
                 puntuacion += 30;
             }
+        }
 
-            // Bonus por control del centro
-            if (dest_x >= 3 && dest_x <= 4 && dest_y >= 4 && dest_y <= 5) {
-                puntuacion += 20;
+        // D. ESTRATEGIA DE APERTURA
+        if (contadorTurnos < 10) {
+            // Bonus por desarrollar piezas menores
+            if (origen_x == 0 && (tipoPieza == 2 || tipoPieza == 3)) {
+                puntuacion += 40;
+            }
+
+            // Penalización por mover dama temprano
+            if (tipoPieza == 5) {
+                puntuacion -= 80;
             }
         }
 
-        //Penalización por pasividad
-        if (dest_x == origen_x && abs(dest_y - origen_y) < 2) {
-            puntuacion -= 15; // Movimientos laterales cortos
+        // E. CONTROL POSICIONAL
+        // Bonus por control central (reducido para peones)
+        if ((dest_x == 3 || dest_x == 4) && (dest_y == 4 || dest_y == 5)) {
+            puntuacion += (tipoPieza == PEON) ? 5 : 15;
         }
 
-        //Bonus por avanzar piezas en medio juego y final
-        if (faseActual != APERTURA) {
-            if (dest_x > origen_x) { // Avanzar hacia el territorio enemigo
-                puntuacion += (dest_x - origen_x) * 5;
+        // F. EVITAR REPETICIÓN
+        for (const auto& mov : historialMovimientos) {
+            if (mov == std::make_tuple(origen_x, origen_y, dest_x, dest_y)) {
+                puntuacion -= 200;
+                break;
             }
         }
 
-        puntuaciones[i] = puntuacion;
+        puntuaciones.push_back(puntuacion);
     }
 
-    //Seleccionar el mejor movimiento
-    int indiceElegido = 0;
-    float maxPuntuacion = puntuaciones[0];
+    // 3. Seleccionar el mejor movimiento
+    int mejorIndice = 0;
+    float mejorPuntuacion = puntuaciones[0];
+
     for (size_t i = 1; i < puntuaciones.size(); i++) {
-        if (puntuaciones[i] > maxPuntuacion) {
-            maxPuntuacion = puntuaciones[i];
-            indiceElegido = i;
+        if (puntuaciones[i] > mejorPuntuacion) {
+            mejorPuntuacion = puntuaciones[i];
+            mejorIndice = i;
         }
     }
 
-    //Actualizar historial
-    auto& mejorMove = allMoves[indiceElegido];
+    // 4. Realizar movimiento
+    auto& mejorMove = allMoves[mejorIndice];
+    int indice_pieza = std::get<0>(mejorMove);
     int origen_x = std::get<1>(mejorMove);
     int origen_y = std::get<2>(mejorMove);
     int dest_x = std::get<3>(mejorMove);
     int dest_y = std::get<4>(mejorMove);
 
+    // Actualizar historial
     historialMovimientos.push_back(std::make_tuple(origen_x, origen_y, dest_x, dest_y));
-    if (historialMovimientos.size() > 10) {
+    if (historialMovimientos.size() > 8) {
         historialMovimientos.erase(historialMovimientos.begin());
     }
 
-    //Realizar movimiento
-    int piece_index = std::get<0>(mejorMove);
+    contadorTurnos++;
+
+    // Ejecutar movimiento
     tablero.setPosicionSeleccionada(origen_x, origen_y);
     ETSIDI::play("sonidos/mover_bot.wav");
-    tablero.RealizarMovimientoIA(dest_x, dest_y, piece_index);
+    tablero.RealizarMovimientoIA(dest_x, dest_y, indice_pieza);
+    verifica_mov = true;
 }
+
+
+bool IA_Dificil::esVulnerableAPeon(Tablero& tablero, int x, int y) {
+    auto& matriz = tablero.getMatriz();
+
+    // Para piezas negras (IA), los peones blancos están abajo (x+1)
+    if (x < 7) {
+        // Comprobar captura por izquierda
+        if (y > 0 && matriz[x + 1][y - 1] == 1) return true;
+
+        // Comprobar captura por derecha
+        if (y < 9 && matriz[x + 1][y + 1] == 1) return true;
+    }
+    return false;
+}
+
+
+
+bool IA_Dificil::estaProtegidoPorPeon(Tablero& tablero, int x, int y) {
+    auto& matriz = tablero.getMatriz();
+
+    // Para piezas negras (IA), los peones protectores están arriba (x-1)
+    if (x > 0) {
+        // Protección por izquierda
+        if (y > 0 && matriz[x - 1][y - 1] == -1) return true;
+
+        // Protección por derecha
+        if (y < 9 && matriz[x - 1][y + 1] == -1) return true;
+    }
+    return false;
+}
+
+
+int IA_Dificil::valorAmenazaMinima(Tablero& tablero, int x, int y) {
+    int minValor = 1000;
+    auto& matriz = tablero.getMatriz();
+
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 10; j++) {
+            if (matriz[i][j] > 0) {  // Piezas blancas (enemigas para la IA)
+                int tempX = tablero.getPosX();
+                int tempY = tablero.getPosY();
+
+                tablero.setPosicionSeleccionada(i, j);
+                if (tablero.Selec_Mover(x, y, false)) {
+                    int valorAtacante = obtenerValorPieza(matriz[i][j]);
+                    if (valorAtacante < minValor) {
+                        minValor = valorAtacante;
+                    }
+                }
+                tablero.setPosicionSeleccionada(tempX, tempY);
+            }
+        }
+    }
+    return minValor;
+}
+
+
+
+//función para verificar si una posición está bajo ataque
+bool IA_Dificil::estaBajoAtaque(Tablero& tablero, int x, int y, bool esPiezaNegra) {
+    auto& matriz = tablero.getMatriz();
+    int temp_pos_x = tablero.getPosX();
+    int temp_pos_y = tablero.getPosY();
+
+    //verificar todas las piezas enemigas
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 10; j++) {
+
+            //piezas del oponente
+            if ((esPiezaNegra && matriz[i][j] > 0) || (!esPiezaNegra && matriz[i][j] < 0)) {
+                tablero.setPosicionSeleccionada(i, j);
+                if (tablero.Selec_Mover(x, y, false)) {  //false = no validar jaque
+                    tablero.setPosicionSeleccionada(temp_pos_x, temp_pos_y);
+                    return true;
+                }
+            }
+        }
+    }
+
+    tablero.setPosicionSeleccionada(temp_pos_x, temp_pos_y);
+    return false;
+}
+
 
 
 // función para obtener valor de pieza
