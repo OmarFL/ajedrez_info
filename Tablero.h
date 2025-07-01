@@ -42,7 +42,15 @@ private:
 	bool jaqnegras = false;                // Rey negro en jaque
 	bool jaqmatenegras = false;            // Rey negro en jaque mate
 	bool tablas = false;                   // Estado de empate
-
+        //enroque
+        bool enroqueLargoBlancas = true;
+        bool enroqueCortoBlancas = true;
+        bool enroqueLargoNegras = true;
+        bool enroqueCortoNegras = true;
+        bool torreReyBlancas = true; 
+        bool torreDamaBlancas = true;
+        bool torreReyNegras = true;   
+        bool torreDamaNegras = true;    
 	// Colores para interfaz
 	int colorR, colorG, colorB;            // Color indicador de turno
 	int colorJR, colorJG, colorJB;         // Color para resaltar jugadas
@@ -80,7 +88,9 @@ public:
 	bool Selec_Caballo(int, int);         // Valida movimiento de caballo
 	bool Selec_Arzobispo(int, int);       // Valida movimiento de arzobispo
 	bool Selec_Canciller(int, int);       // Valida movimiento de canciller
-
+//Enroque
+bool Selec_Enroque(int i, int j);
+void RealizarEnroque(bool esCorto);
 	// Lógica del juego
 	bool color_check(int R, int G, int B); // Verifica color de casilla
 	bool Consultar_Turno();               // Devuelve turno actual
