@@ -198,8 +198,123 @@ void Tablero::dibuja()
 	}
 
 }
+//Enroque
+bool Tablero::Selec_Enroque(int i, int j) {
+	// Enroque corto (0-0)
+	if (j > pos_y) {
+		if (color) { // Blancas
+			return enroqueCortoBlancas && torreReyBlancas &&
+				matriz[0][5] == 0 && matriz[0][6] == 0 && matriz[0][7] == 0 && matriz[0][8] == 0 &&
+				!Jaque(true);
+		}
+		else { // Negras
+			return enroqueCortoNegras && torreReyNegras &&
+				matriz[7][5] == 0 && matriz[7][6] == 0 && matriz[7][7] == 0 && matriz[7][8] == 0 &&
+				!Jaque(false);
+		}
+	}
+	// Enroque largo (0-0-0)
+	else {
+		if (color) { // Blancas
+			return enroqueLargoBlancas && torreDamaBlancas &&
+				matriz[0][3] == 0 && matriz[0][2] == 0 && matriz[0][1] == 0 &&
+				!Jaque(true);
+		}
+		else { // Negras
+			return enroqueLargoNegras && torreDamaNegras &&
+				matriz[7][3] == 0 && matriz[7][2] == 0 && matriz[7][1] == 0 &&
+				!Jaque(false);
+		}
+	}
+}
+void Tablero::RealizarEnroque(bool esCorto) {
+	// Encontrar el rey y la torre correspondiente
+	int reyIndex = -1, torreIndex = -1;
+	int torreCol = esCorto ? 9 : 0; 
+
+	for (int z = 0; z < piezas.size(); z++) {
+		Vector pos = piezas[z]->Get_Posicion();
+		// Buscar el rey
+		if (pos.x == pos_x && pos.y == pos_y && abs(piezas[z]->Get_Valor()) == REY) {
+			reyIndex = z;
+		}
+		// Buscar la torre
+		else if (pos.x == pos_x && pos.y == torreCol && abs(piezas[z]->Get_Valor()) == TORRE) {
+			torreIndex = z;
+		}
+	}
+
+	if (reyIndex == -1 || torreIndex == -1) return;
+	
+	if (color) { // Blancas
+		if (enroqueCortoBlancas == true && enroqueLargoBlancas == true) {
+			if (esCorto) { // Enroque corto (0-0)
+				// Mover torre 
+				piezas[torreIndex]->Set_Posicion(pos_x, 7);
+				matriz[0][7] = TORRE;
+				matriz[0][9] = 0;
+				// Mover rey
+				piezas[reyIndex]->Set_Posicion(pos_x, 8);
+				matriz[0][8] = REY;
+				matriz[0][5] = 0;
 
 
+			}
+			else { // Enroque largo (0-0-0)
+				// Mover torre (a1 -> d1)
+				piezas[torreIndex]->Set_Posicion(pos_x, 2);
+				matriz[0][2] = TORRE;
+				matriz[0][0] = 0;
+				// Mover rey (e1 -> a1)
+				piezas[reyIndex]->Set_Posicion(pos_x, 1);
+				matriz[0][1] = REY;
+				matriz[0][5] = 0;
+
+
+			}
+			enroqueLargoBlancas = false; // Deshabilitar enroque largo para blancas
+			enroqueCortoBlancas = false; // Deshabilitar enroque corto para blancas
+		}
+	}
+	else { // Negras
+		if (enroqueCortoNegras == true && enroqueLargoNegras == true) {
+
+			if (esCorto) { // Enroque corto (0-0)
+				// Mover rey (e8 -> h8)
+				piezas[reyIndex]->Set_Posicion(pos_x, 8);
+				matriz[7][8] = -REY;
+				matriz[7][5] = 0;
+
+				// Mover torre (h8 -> f8)
+				piezas[torreIndex]->Set_Posicion(pos_x, 7);
+				matriz[7][7] = -TORRE;
+				matriz[7][9] = 0;
+			}
+			else { // Enroque largo (0-0-0)
+				// Mover rey (e8 -> a8)
+				piezas[reyIndex]->Set_Posicion(pos_x, 1);
+				matriz[7][1] = -REY;
+				matriz[7][5] = 0;
+
+				// Mover torre (a8 -> d8)
+				piezas[torreIndex]->Set_Posicion(pos_x, 2);
+				matriz[7][2] = -TORRE;
+				matriz[7][0] = 0;
+			}
+			enroqueLargoNegras = false; // Deshabilitar enroque largo para negras
+			enroqueCortoNegras = false; // Deshabilitar enroque corto para negras
+		}
+	}
+
+	// Reproducir sonido y actualizar estado
+	ETSIDI::play("sonidos/enroque.wav");
+	if (color) {
+		enroqueCortoBlancas = enroqueLargoBlancas = false;
+	}
+	else {
+		enroqueCortoNegras = enroqueLargoNegras = false;
+	}
+}
 
 // Selecciona una pieza en la posición del ratón para moverla
 void Tablero::Seleccionar_Pieza_1VS1(Vector origen) 
@@ -237,7 +352,20 @@ void Tablero::Seleccionar_Pieza_1VS1(Vector origen)
 void Tablero::Mover_Pieza_1VS1(Vector destino) //posición del ratón -> destino
 {
 
-	if (posicion_selecc != -1) { // Si es una casilla permitida
+if (posicion_selecc != -1) { // Si es una casilla permitida
+		if (enroqueCortoBlancas == true && enroqueLargoBlancas == true || enroqueCortoNegras == true && enroqueLargoNegras == true)
+  {
+	bool esEnroque = (abs(pos_y - destino.y) >= 3 &&  // 3 o más casillas
+		abs(matriz[pos_x][pos_y]) == REY);
+
+	if (esEnroque) {
+		RealizarEnroque(destino.y > pos_y); // true=corto, false=largo
+		color = !color;
+		posicion_selecc = -1;
+		movimientos_posibles.clear();
+		return;
+	}
+  }
 
 		//Deshabilitación de las limitaciones de movimiento
 		if (Selec_Mover(destino.x, destino.y, true)) { 
@@ -642,11 +770,15 @@ bool Tablero::Selec_Peon(int i, int j) {
 }
 
 bool Tablero::Selec_Rey(int i, int j) {
-	bool sol = false;
-	if (matriz[i][j] == 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2) ) { sol = true; }                       
-	if (color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Blanco
-	if (!color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Negro
-	return sol;
+	// Movimiento normal del rey (1 casilla)
+if (abs(pos_x - i) <= 1 && abs(pos_y - j) <= 1) {
+	return true;
+}
+// Enroque (detección de movimiento largo)
+if (abs(pos_y - j) >= 3 && pos_x == i) {  // 3 o más casillas
+	return Selec_Enroque(i, j);
+}
+return false;
 }
 
 bool Tablero::Selec_Alfil(int i, int j) { 
