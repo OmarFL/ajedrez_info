@@ -280,17 +280,17 @@ void IA_Dificil::mover(Tablero& tablero) {
     verifica_mov = false;
     auto& matriz = tablero.getMatriz();
     auto& piezas = tablero.getPiezas();
-    std::vector<std::tuple<int, int, int, int>> historialMovimientos;
 
     // 1. Generar todos los movimientos válidos
     vector<tuple<int, int, int, int, int>> allMoves = generarTodosMovimientos(tablero, true);
+    std::vector<std::tuple<int, int, int, int>> historialMovimientos;
 
     if (allMoves.empty()) {
         verifica_mov = false;
         return;
     }
 
-    // 2. Evaluar cada movimiento con criterios más estrictos
+    // 2. Evaluar cada movimiento con criterios mejorados
     vector<float> puntuaciones;
     for (size_t i = 0; i < allMoves.size(); i++) {
         auto& move = allMoves[i];
@@ -304,78 +304,75 @@ void IA_Dificil::mover(Tablero& tablero) {
         int valorPieza = obtenerValorPieza(tipoPieza);
         int valorCaptura = (matriz[dest_x][dest_y] > 0) ?
             obtenerValorPieza(matriz[dest_x][dest_y]) : 0;
+        bool esPropia = (matriz[dest_x][dest_y] < 0); // ¿Captura pieza propia?
 
         float puntuacion = 0.0f;
         bool estaAmenazada = estaBajoAtaque(tablero, dest_x, dest_y, true);
 
-        // A. EVALUACIÓN DE CAPTURAS (con protección de piezas valiosas)
-        if (valorCaptura > 0) {
-            // Bonus por capturar (mayor para piezas menores)
-            float factorCaptura = (valorPieza < VALOR_TORRE) ? 1.8f : 1.2f;
-            puntuacion += valorCaptura * factorCaptura;
-
-            // Penalización EXTREMA si pieza valiosa queda expuesta
-            if (valorPieza > VALOR_TORRE && estaAmenazada) {
-                puntuacion -= valorPieza * 2.0f;  // Penalización doble del valor
-            }
+        // A. PENALIZACIÓN EXTREMA POR COMER PROPIOS
+        if (esPropia) {
+            puntuacion -= 1000;  // Penalización enorme para evitar comer propias
         }
 
-        // B. EVALUACIÓN DE RIESGO PARA PIEZAS VALIOSAS
-        if (valorPieza > VALOR_CABALLO) {
-            // Penalización fuerte por exponer piezas importantes
-            if (estaAmenazada) {
-                puntuacion -= valorPieza * 1.5f;
+        // B. ESTRATEGIA PARA PIEZAS VALIOSAS
+        else if (tipoPieza == 5 || tipoPieza == 4 || tipoPieza == 7 || tipoPieza == 8) {
+            // 1. Penalización por mover en apertura
+            if (contadorTurnos < 12) {
+                puntuacion -= 150;
+            }
 
-                // Penalización adicional si la amenaza viene de pieza menor
-                if (valorPieza > VALOR_TORRE) {
-                    int valorAmenaza = valorAmenazaMinima(tablero, dest_x, dest_y);
-                    if (valorAmenaza < valorPieza) {
-                        puntuacion -= (valorPieza - valorAmenaza) * 1.2f;
-                    }
+            // 2. Penalización extrema por exponer
+            if (estaAmenazada) {
+                puntuacion -= valorPieza * 3.0f;
+
+                // Penalización adicional si la amenaza es de pieza menor
+                if (valorAmenazaMinima(tablero, dest_x, dest_y) < valorPieza) {
+                    puntuacion -= valorPieza * 2.0f;
                 }
             }
+
+            // 3. Bonus por captura segura
+            if (valorCaptura > 0 && !estaAmenazada) {
+                puntuacion += valorCaptura * 1.5f;
+            }
         }
 
-        // C. ESTRATEGIA PARA PEONES (avance seguro)
-        if (tipoPieza == 1) {
-            // Bonus por avance controlado
+        // C. ESTRATEGIA MEJORADA PARA PEONES
+        else if (tipoPieza == 1) {
+            // 1. Bonus agresivo por capturas
+            if (valorCaptura > 0) {
+                puntuacion += valorCaptura * 4.0f;  // Bonus muy alto
+            }
+
+            // 2. Avance seguro (solo si no hay amenaza)
             int avance = dest_x - origen_x;
-            puntuacion += avance * 2;
-
-            // Penalización MUY FUERTE si queda expuesto a captura por peón enemigo
-            if (esVulnerableAPeon(tablero, dest_x, dest_y)) {
-                puntuacion -= 100;
+            if (!esVulnerableAPeon(tablero, dest_x, dest_y)) {
+                puntuacion += avance * 3;
             }
 
-            // Bonus extra si está protegido por otro peón
-            if (estaProtegidoPorPeon(tablero, dest_x, dest_y)) {
-                puntuacion += 30;
+            // 3. Bonus por romper estructuras enemigas
+            if (dest_y >= 4 && dest_y <= 5) {  // Centro
+                puntuacion += 20;
             }
         }
 
-        // D. ESTRATEGIA DE APERTURA
-        if (contadorTurnos < 10) {
-            // Bonus por desarrollar piezas menores
-            if (origen_x == 0 && (tipoPieza == 2 || tipoPieza == 3)) {
-                puntuacion += 40;
+        // D. ESTRATEGIA PARA PIEZAS MENORES (Caballo, Alfil)
+        else if (tipoPieza == 2 || tipoPieza == 3) {
+            // Bonus por desarrollo en apertura
+            if (contadorTurnos < 10 && origen_x == 0) {
+                puntuacion += 60;
             }
 
-            // Penalización por mover dama temprano
-            if (tipoPieza == 5) {
-                puntuacion -= 80;
+            // Bonus por control central
+            if ((dest_x == 3 || dest_x == 4) && (dest_y == 4 || dest_y == 5)) {
+                puntuacion += 35;
             }
         }
 
-        // E. CONTROL POSICIONAL
-        // Bonus por control central (reducido para peones)
-        if ((dest_x == 3 || dest_x == 4) && (dest_y == 4 || dest_y == 5)) {
-            puntuacion += (tipoPieza == PEON) ? 5 : 15;
-        }
-
-        // F. EVITAR REPETICIÓN
+        // E. EVITAR REPETICIÓN
         for (const auto& mov : historialMovimientos) {
             if (mov == std::make_tuple(origen_x, origen_y, dest_x, dest_y)) {
-                puntuacion -= 200;
+                puntuacion -= 1000;  // Penalización extremadamente alta
                 break;
             }
         }
@@ -404,7 +401,7 @@ void IA_Dificil::mover(Tablero& tablero) {
 
     // Actualizar historial
     historialMovimientos.push_back(std::make_tuple(origen_x, origen_y, dest_x, dest_y));
-    if (historialMovimientos.size() > 8) {
+    if (historialMovimientos.size() > 10) {
         historialMovimientos.erase(historialMovimientos.begin());
     }
 
@@ -416,6 +413,8 @@ void IA_Dificil::mover(Tablero& tablero) {
     tablero.RealizarMovimientoIA(dest_x, dest_y, indice_pieza);
     verifica_mov = true;
 }
+
+
 
 
 bool IA_Dificil::esVulnerableAPeon(Tablero& tablero, int x, int y) {
