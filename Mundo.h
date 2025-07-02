@@ -4,6 +4,7 @@
 
 using namespace std;
 
+
 class Mundo
 {
 
@@ -17,17 +18,20 @@ class Mundo
 	float casillas_ancho = 4;      // Ancho en unidades de mundo para cada casilla
 	Vector Casilla_ini;            // Almacena posición inicial al arrastrar pieza
 	Vector Casilla_fin;            // Almacena posición final al soltar pieza
+
+	int dificultad_ia = 0;  // 0=fácil, 1=medio, 2=difícil
 	
 
 public:
 
-	void inicializa(int tipo_juego, const int& num_rival);
+	void inicializa(int tipo_juego, const int& num_rival, int dificultad);
 	void dibuja();
 
 	// Gestiona eventos de ratón para interacción con el tablero
 	void Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla);
 
 	int get_opon() { return tablero.Get_Oponente(); }
+
 
 	// Verifica estados de finalización de partida:
 	// 1 = jaque mate a blancas, 2 = jaque mate a negras, 3 = tablas, 0 = juego activo
@@ -47,3 +51,4 @@ public:
 	// Reinicia el tablero para nueva partida
 	void borrar() { tablero.Borrar(); }
 };
+
