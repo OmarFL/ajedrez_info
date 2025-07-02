@@ -1,4 +1,5 @@
 #include "freeglut.h"
+#include "ETSIDI.h"
 #include "CoordinadorAjedrez.h"
 
 coordinador juego;
@@ -8,9 +9,11 @@ void OnTimer(int value); //Esta funcion sera llamada cuando transcurra una tempo
 void OnKeyboardDown(unsigned char key, int x, int y); //Cuando se pulse una tecla	
 void OnMouseClick(int button, int state, int x, int y); //Control del ratón
 
-
 int main(int argc, char* argv[])
 {
+	// Semilla de aleatoriedad (necesaria para los movimientos de la IA)
+	std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
 	//Inicializar el gestor de ventanas GLUT
 	//y crear la ventana
 	glutInit(&argc, argv);
@@ -64,16 +67,13 @@ void OnKeyboardDown(unsigned char key, int x_t, int y_t)
 
 void OnTimer(int value)
 {
-	// Música de fondo 
-	ETSIDI::play("sonidos/MusicaFondo.wav");
 
-	glutTimerFunc(25, OnTimer, 0);
 	glutPostRedisplay();
 }
 
-
 void OnMouseClick(int b, int state, int x, int y)
 {
+
 	bool down = (state == GLUT_DOWN);
 
 	int specialKey = glutGetModifiers();
