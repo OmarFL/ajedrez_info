@@ -17,15 +17,17 @@ void Mundo::dibuja()
 
 }
 
-void Mundo::inicializa(int tipo_juego, const int& num_rival)
+void Mundo::inicializa(int tipo_juego, const int& num_rival, int dificultad = 0)
 {
 	tablero.inicializa(tipo_juego);  // Prepara el tablero según el modo de juego
 	tablero.Set_Oponente(num_rival); // Establece el tipo de oponente
+    tablero.setDificultadIA(dificultad); //Establece la dificultad de la IA (en el modo BOT)
+    dificultad_ia = dificultad;
 }
 
 
 
-void Mundo::Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla) 
+void Mundo::Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool espacio, bool ref_tecla)
 {
 
     num_rival = tablero.Get_Oponente(); // Actualiza el tipo de oponente
@@ -96,10 +98,19 @@ void Mundo::Boton_Raton(int num_rival, int x, int y, int boton, bool abajo, bool
         }
     }
 
-    // Si se soltó el botón y es turno de la IA, hacer movimiento automático
-    if (!abajo && num_rival == 1 && !tablero.Consultar_Turno()) {
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Pequeña pausa
-        tablero.Auto_Mov(); // La IA realiza su movimiento
+    // Si se soltó el botón y es turno de la IA, realizar movimiento según dificultad
+    if (!abajo && num_rival >= 1 && !tablero.Consultar_Turno()) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));   //Pausa de 1seg
+
+        switch (dificultad_ia) {
+
+        case 0: tablero.Auto_Mov(); 
+            break;         
+        case 1: tablero.Auto_Mov_Medio(); 
+            break;   
+        case 2: tablero.Auto_Mov_Dificil(); 
+            break; 
+
+        }
     }
 }
-
