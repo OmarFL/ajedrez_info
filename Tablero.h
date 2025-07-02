@@ -3,7 +3,8 @@
 #include <vector>
 #include "ETSIDI.h"
 #include "Pieza.h"
-#include <Vector.h>
+#include "Vector.h"
+#include "IA_Movimientos.h"
 
 
 
@@ -15,8 +16,10 @@ struct CasillA
 	int colorR, colorG, colorB;
 };
 
-class Tablero
-{
+
+class IA_Movimientos;	//Declaración anticipada
+
+class Tablero {
 private:
 
 	int tipo_juego;    // Modo de juego seleccionado
@@ -30,6 +33,8 @@ private:
 	std::vector<std::vector<int>> matriz;  // Matriz lógica del tablero (8x10)
 	std::vector<Pieza*> piezas;            // Vector de punteros a las piezas
 
+	IA_Movimientos* ia_actual = nullptr;  // Para la gestión de la dificultad
+
 	// Variables de estado del juego
 	int mov_x_IA = -1, mov_y_IA = -1;      // Movimiento planeado por la IA
 	int posicion_selecc = -1;               // Índice de pieza seleccionada (-1=nada)
@@ -42,21 +47,25 @@ private:
 	bool jaqnegras = false;                // Rey negro en jaque
 	bool jaqmatenegras = false;            // Rey negro en jaque mate
 	bool tablas = false;                   // Estado de empate
-        //enroque
-        bool enroqueLargoBlancas = true;
-        bool enroqueCortoBlancas = true;
-        bool enroqueLargoNegras = true;
-        bool enroqueCortoNegras = true;
-        bool torreReyBlancas = true; 
-        bool torreDamaBlancas = true;
-        bool torreReyNegras = true;   
-        bool torreDamaNegras = true;    
+
+
+	//enroque
+	bool enroqueLargoBlancas = true;
+	bool enroqueCortoBlancas = true;
+	bool enroqueLargoNegras = true;
+	bool enroqueCortoNegras = true;
+	bool torreReyBlancas = true;
+	bool torreDamaBlancas = true;
+	bool torreReyNegras = true;
+	bool torreDamaNegras = true;
+
 	// Colores para interfaz
 	int colorR, colorG, colorB;            // Color indicador de turno
 	int colorJR, colorJG, colorJB;         // Color para resaltar jugadas
 
 	// Tipos de piezas
 	enum { REY = 1, DAMA, ALFIL, CABALLO, TORRE, PEON, ARZOBISPO, CANCILLER };
+
 
 	//Variables para la implementación del marcador
 	float marcador_x, marcador_y, marcador_ancho, marcador_alto;
@@ -77,31 +86,43 @@ public:
 	
 	void CalcularMovimientosPosibles(); 
 	void DibujarMovimientosPosibles();  // Método para dibujar las casillas a las que es posible moverse
-
+												
 
 	// Lógica de movimientos por tipo de pieza
 	bool Selec_Peon(int, int);            // Valida movimiento de peón
 	bool Selec_Rey(int, int);             // Valida movimiento de rey
-	bool Selec_Alfil(int, int);           // Valida movimiento de alfil
 	bool Selec_Dama(int, int);            // Valida movimiento de dama
 	bool Selec_Torre(int, int);           // Valida movimiento de torre
 	bool Selec_Caballo(int, int);         // Valida movimiento de caballo
+	bool Selec_Alfil(int, int);           // Valida movimiento de alfil
 	bool Selec_Arzobispo(int, int);       // Valida movimiento de arzobispo
 	bool Selec_Canciller(int, int);       // Valida movimiento de canciller
-//Enroque
-bool Selec_Enroque(int i, int j);
-void RealizarEnroque(bool esCorto);
+	bool Selec_Mover(int, int, bool);     // Gestiona la validación de movimientos
+
 	// Lógica del juego
 	bool color_check(int R, int G, int B); // Verifica color de casilla
+	void Comprobar_Jaque();               // Detecta situaciones de jaque
+	void Comprobar_JaqueMate();           // Detecta jaque mate
 	bool Consultar_Turno();               // Devuelve turno actual
 	void Coronar(int, int, int, Vector);  // Maneja coronación de peones
 	bool Jaque(bool col);                 // Comprueba jaque para un color
-	void Comprobar_Jaque();               // Detecta situaciones de jaque
-	void Comprobar_JaqueMate();           // Detecta jaque mate
+
+	//Enroque
+	bool Selec_Enroque(int i, int j);
+	void RealizarEnroque(bool esCorto);
 
 	// Getters y setters
 	void Set_Oponente(const int& TIPO_OPON) { tipo_oponente = TIPO_OPON; }
 	int Get_Oponente() { return tipo_oponente; }
+
+	std::vector<std::vector<int>>& getMatriz() { return matriz; }
+	std::vector<Pieza*>& getPiezas() { return piezas; }
+
+	bool getTurno() const { return color; }
+	int getPosX() const { return pos_x; }
+	int getPosY() const { return pos_y; }
+	void setPosicionSeleccionada(int x, int y) { pos_x = x; pos_y = y; }
+
 
 	// Estados de juego
 	bool Get_JaqueBlancas() { 
@@ -128,13 +149,17 @@ void RealizarEnroque(bool esCorto);
 		return tablas; 
 	}
 
+
+
 	// Dificultad IA
 	void setDificultadIA(int dificultad);
 	void RealizarMovimientoIA(int mov_x, int mov_y, int pos_sel);
 
+
 	void Borrar();
 
 	
-	friend class Mundo;	  
+	friend class Mundo;
 	friend class IA_Movimientos;
 };
+
