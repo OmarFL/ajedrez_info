@@ -1,9 +1,26 @@
 #include "freeglut.h"
-#include "ETSIDI.h"
 #include "Tablero.h"
+#include "mundo.h"
+#include <iostream>
+#include <chrono>
+#include <thread>  
 
 
-//Dibujar tablero
+bool Tablero::color_check(int R, int G, int B) {
+	R = colorR;
+	G = colorG;
+	B = colorB;
+
+	if (((R==140)&&(G==65)&&(B==20)) || ((R == 0) && (G == 0) && (B == 0)))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 
 void Tablero::dibuja()
 {
@@ -40,7 +57,7 @@ void Tablero::dibuja()
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,
-		ETSIDI::getTexture("imagenes/FONDO.png").id);
+		ETSIDI::getTexture("imagenes/FONDO_juego.png").id);
 	glDisable(GL_LIGHTING);
 	glBegin(GL_POLYGON);
 	glColor3f(1, 1, 1);
@@ -54,9 +71,16 @@ void Tablero::dibuja()
 
 
 
+
+	//---------------------Nota: NO cambiar el orden de dibujado bajo ningún concepto porque se lía parda xd---------------------
+
+
+	
 	// GESTIÓN DE LOS MOVIMIENTOS POSIBLES
 	DibujarMovimientosPosibles();
 
+	// GESTIÓN DEL MARCADOR
+	DibujarMarcadorTurno();
 
 
 	// GESTIÓN DE TODAS LAS PIEZAS:
@@ -198,6 +222,51 @@ void Tablero::dibuja()
 
 
 
+void Tablero::CalcularMovimientosPosibles() {
+	movimientos_posibles.clear();
+
+	if (posicion_selecc == -1) return;
+
+	int x = pos_x;
+	int y = pos_y;
+	int tipo_pieza = abs(matriz[x][y]);
+
+	// Verificar todas las casillas del tablero
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			// Simular movimiento para ver si es válido
+			if (Selec_Mover(i, j, true)) {
+				Vector movimiento = { i, j };
+				movimientos_posibles.push_back(movimiento);
+			}
+		}
+	}
+}
+
+
+void Tablero::DibujarMovimientosPosibles() {
+	if (posicion_selecc == -1) return;
+
+	for (const auto& mov : movimientos_posibles) {
+		int i = mov.x;
+		int j = mov.y;
+
+		// Dibujar cuadro semitransparente verde
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBegin(GL_POLYGON);
+		glColor4f(0.0, 1.0, 0.0, 0.3); // Verde claro con transparencia
+		glVertex3f(Casillero[i][j].param_x - 9, Casillero[i][j].param_y, 0.1f);
+		glVertex3f(Casillero[i][j].param_x - 9, Casillero[i][j].param_y + 4, 0.1f);
+		glVertex3f(Casillero[i][j].param_x - 5, Casillero[i][j].param_y + 4, 0.1f);
+		glVertex3f(Casillero[i][j].param_x - 5, Casillero[i][j].param_y, 0.1f);
+		glEnd();
+		glDisable(GL_BLEND);
+	}
+}
+
+
+
 // Selecciona una pieza en la posición del ratón para moverla
 void Tablero::Seleccionar_Pieza_1VS1(Vector origen) 
 {
@@ -217,7 +286,8 @@ void Tablero::Seleccionar_Pieza_1VS1(Vector origen)
 		if (posicion_selecc != -1) {
 			// Verificar turno correcto (valor negativo = negras, positivo = blancas)
 			if ((color && piezas[posicion_selecc]->Get_Valor() < 0) || (!color && piezas[posicion_selecc]->Get_Valor() > 0)) { 
-				posicion_selecc = -1;			
+				posicion_selecc = -1;
+				ETSIDI::play("sonidos/Error.wav");
 			}
 
 			if (posicion_selecc != -1) {
@@ -229,21 +299,36 @@ void Tablero::Seleccionar_Pieza_1VS1(Vector origen)
 	}
 }
 
-
-
 void Tablero::Mover_Pieza_1VS1(Vector destino) //posición del ratón -> destino
 {
+
+	if (enroqueCortoBlancas == true && enroqueLargoBlancas == true || enroqueCortoNegras == true && enroqueLargoNegras == true){
+
+	  bool esEnroque = (abs(pos_y - destino.y) >= 3 &&  // 3 o más casillas
+		  abs(matriz[pos_x][pos_y]) == REY);
+
+	  if (esEnroque) {
+		  RealizarEnroque(destino.y > pos_y); // true=corto, false=largo
+		  color = !color;
+		  posicion_selecc = -1;
+		  movimientos_posibles.clear();
+		  return;
+	  }
+	}
 
 	if (posicion_selecc != -1) { // Si es una casilla permitida
 
 		//Deshabilitación de las limitaciones de movimiento
 		if (Selec_Mover(destino.x, destino.y, true)) { 
 
+			ETSIDI::play("sonidos/mover.wav");
+
 			// Algoritmo de comer: se elimina la pieza si hay otra del oponente en el destino
 			if ((color && matriz[destino.x][destino.y] != 0) || (!color && matriz[destino.x][destino.y] != 0)) {
 
 				for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
 					if (piezas[z]->Get_Posicion().x == destino.x && piezas[z]->Get_Posicion().y == destino.y) {
+						ETSIDI::play("sonidos/ComerPieza.wav");
 
 						delete piezas[z];
 						if (z < posicion_selecc) posicion_selecc--;
@@ -256,21 +341,32 @@ void Tablero::Mover_Pieza_1VS1(Vector destino) //posición del ratón -> destino
 
 			piezas[posicion_selecc]->Set_Posicion(destino.x, destino.y);
 
+			//Se verifica que si un peón ha llegado a la casilla final para su posterior coronación
+			Coronar(posicion_selecc, pos_x, pos_y, destino);
+
 			//Actualización de los valores
 			matriz[destino.x][destino.y] = matriz[pos_x][pos_y];
 			matriz[pos_x][pos_y] = 0;
 
+			Comprobar_Jaque();				// Se comprueba si el oponente esta o no en jaque
+
 			//Cambio de turno
 			if (color) color = false;		// Turno de las Negras
-			else color = true;			// Turno de las Blancas
+			else color = true;				// Turno de las Blancas
 
-			
+			Comprobar_JaqueMate();			// Se comprueba si el oponente esta o no en jaque mate
 
 		}
-		
+		else
+			ETSIDI::play("sonidos/Error.wav");
+
+	}
 	posicion_selecc = -1;
 	movimientos_posibles.clear(); // Limpiar movimientos posibles
 }
+
+
+
 
 void Tablero::inicializa(const int& tipojuego)
 {
@@ -278,13 +374,14 @@ void Tablero::inicializa(const int& tipojuego)
 
 	static GLuint fondoTexture = 0;
 	if (fondoTexture == 0) {
-		fondoTexture = ETSIDI::getTexture("imagenes/FONDO.png").id;
+		fondoTexture = ETSIDI::getTexture("imagenes/FONDO_juego.png").id;
 		glBindTexture(GL_TEXTURE_2D, fondoTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
+
 
 	// Configuración gráfica del tablero (8x10 casillas)
 	for (int i = 0; i < 8; i++) {
@@ -345,5 +442,576 @@ void Tablero::inicializa(const int& tipojuego)
 	color = true;	    // INSTRUCCIÓN PARA QUE LAS BLANCAS EMPIECEN
 	jaqblancas = jaqmateblancas =  jaqnegras = jaqmatenegras = tablas = false;
 
+
+
+	// Configuración del marcador
+	
+	marcador_x = 0.0f;       // Posición X (horizontal) - aumentar para mover a la derecha
+	marcador_y = 34.0f;      // Posición Y (vertical) - aumentar para subir
+	marcador_ancho = 30.0f;  // Ancho del fondo
+	marcador_alto = 3.0f;    // Altura del fondo
+	marcador_colorR = 0;
+	marcador_colorG = 0;
+	marcador_colorB = 0;
+	
+
+}
+
+
+
+void Tablero::DibujarMarcadorTurno() {
+
+	// Dibujar fondo del marcador
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+
+	// Fondo
+	glColor3ub(marcador_colorR, marcador_colorG, marcador_colorB);
+	glBegin(GL_QUADS);
+	glVertex3f(marcador_x, marcador_y, 0);
+	glVertex3f(marcador_x + marcador_ancho, marcador_y, 0);
+	glVertex3f(marcador_x + marcador_ancho, marcador_y + marcador_alto, 0);
+	glVertex3f(marcador_x, marcador_y + marcador_alto, 0);
+	glEnd();
+
+
+	// Dibujar icono del rey
+	glEnable(GL_TEXTURE_2D);
+
+	if (color) { // Turno blancas
+		ETSIDI::Sprite rey_w = { "imagenes/rey_w.png" };
+		glPushMatrix();
+		glTranslatef(marcador_x - 4.0f, marcador_y - 0.8f, 1); // Ajusta posición
+		rey_w.setSize(4.0, 4.0);
+		rey_w.draw();
+		glPopMatrix();
+	}
+	else {   // Turno negras
+		ETSIDI::Sprite rey_b = { "imagenes/rey_b.png" };
+		glPushMatrix();
+		glTranslatef(marcador_x - 4.0f, marcador_y - 1.1f, 1); // Ajusta posición
+		rey_b.setSize(4.5, 4.5);
+		rey_b.draw();
+		glPopMatrix();
+	}
+
+
+	// Texto
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(1, 1, 1);
+	ETSIDI::setFont("fuentes/Bitwise.ttf", 24);
+	ETSIDI::printxy(color ? "TURNO: BLANCAS" : "TURNO: NEGRAS",
+		marcador_x + 2, marcador_y + 1);
+
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+}
+
+
+
+
+
+void Tablero::setDificultadIA(int dificultad) {
+	delete ia_actual;  // Limpiar IA anterior
+
+	switch (dificultad) {
+	case 0: ia_actual = new IA_Facil(); break;
+	case 1: ia_actual = new IA_Medio(); break;
+	case 2: ia_actual = new IA_Dificil(); break;
+	default: ia_actual = new IA_Facil();
+	}
+}
+
+
+void Tablero::Auto_Mov() {
+
+	if (ia_actual) {
+		// Realizar movimiento
+		ia_actual->mover(*this);
+	}
+}
+
+void Tablero::Auto_Mov_Medio() {
+
+	IA_Medio ia;
+	ia.mover(*this);
+}
+
+
+void Tablero::Auto_Mov_Dificil() {
+	IA_Dificil ia;
+	ia.mover(*this);
+}
+
+
+void Tablero::RealizarMovimientoIA(int mov_x, int mov_y, int pos_sel) {
+
+	// Comer cualquier pieza en el destino
+	if (matriz[mov_x][mov_y] != 0) {
+		for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+			if (piezas[z]->Get_Posicion().x == mov_x &&
+				piezas[z]->Get_Posicion().y == mov_y) {
+				ETSIDI::play("sonidos/ComerPieza.wav");
+				delete piezas[z];
+				if (z < pos_sel) pos_sel--;
+				piezas.erase(piezas.begin() + z);
+				break;
+			}
+		}
+	}
+
+	// Guardar posición original para coronación
+	Vector origen = piezas[pos_sel]->Get_Posicion();
+
+	// Mover la pieza
+	piezas[pos_sel]->Set_Posicion(mov_x, mov_y);
+	Coronar(pos_sel, pos_x, pos_y, { mov_x, mov_y });  
+
+	// Actualizar matriz
+	matriz[mov_x][mov_y] = matriz[origen.x][origen.y];
+	matriz[origen.x][origen.y] = 0;
+
+	// Coronar si es necesario
+	//Coronar(pos_sel, origen.x, origen.y, { mov_x, mov_y });
+
+	Comprobar_Jaque();
+	color = true;  // Cambiar turno a blancas
+	Comprobar_JaqueMate();
+}
+
+
+
+bool Tablero::Selec_Mover(int i, int j, bool f) {
+	if (pos_x < 0 || pos_y < 0) return false;  // Posición inválida
+
+	bool movimientoValido = false;
+	int tipoPieza = abs(matriz[pos_x][pos_y]);
+
+	// Delegar a función específica según tipo de pieza
+	switch (tipoPieza) {
+	case PEON: movimientoValido = Selec_Peon(i, j); break;
+	case REY: movimientoValido = Selec_Rey(i, j); break;
+	case DAMA: movimientoValido = Selec_Dama(i, j); break;
+	case ALFIL: movimientoValido = Selec_Alfil(i, j); break;
+	case CABALLO: movimientoValido = Selec_Caballo(i, j); break;
+	case TORRE: movimientoValido = Selec_Torre(i, j); break;
+	case ARZOBISPO: movimientoValido = Selec_Arzobispo(i, j); break;
+	case CANCILLER: movimientoValido = Selec_Canciller(i, j); break;
+	}
+
+
+	// RESTRICCIÓN PARA EVITAR QUE EL JUGADOR / LA IA PUEDA COMERSE A SU PROPIO REY
+	if (matriz[i][j] != 0) {
+		// Verificar si la pieza destino es el rey del mismo color
+		if ((color && matriz[i][j] == REY) || (!color && matriz[i][j] == -REY)) {
+			return false;
+		}
+	}
+
+
+	// Verificar si el movimiento deja al rey en jaque
+	if (f && movimientoValido) {
+		int piezaDestino = matriz[i][j];
+		matriz[i][j] = matriz[pos_x][pos_y];
+		matriz[pos_x][pos_y] = 0;
+
+		if (Jaque(color)) {  // Si queda en jaque, movimiento inválido
+			movimientoValido = false;
+		}
+
+		// Revertir movimiento simulado
+		matriz[pos_x][pos_y] = matriz[i][j];
+		matriz[i][j] = piezaDestino;
+	}
+
+	return movimientoValido;
+}
+
+
+
+bool Tablero::Selec_Enroque(int i, int j) {
+	// Enroque corto (0-0)
+	if (j > pos_y) {
+		if (color) { // Blancas
+			return enroqueCortoBlancas && torreReyBlancas &&
+				matriz[0][5] == 0 && matriz[0][6] == 0 && matriz[0][7] == 0 && matriz[0][8] == 0 &&
+				!Jaque(true);
+		}
+		else { // Negras
+			return enroqueCortoNegras && torreReyNegras &&
+				matriz[7][5] == 0 && matriz[7][6] == 0 && matriz[7][7] == 0 && matriz[7][8] == 0 &&
+				!Jaque(false);
+		}
+	}
+	// Enroque largo (0-0-0)
+	else {
+		if (color) { // Blancas
+			return enroqueLargoBlancas && torreDamaBlancas &&
+				matriz[0][3] == 0 && matriz[0][2] == 0 && matriz[0][1] == 0 &&
+				!Jaque(true);
+		}
+		else { // Negras
+			return enroqueLargoNegras && torreDamaNegras &&
+				matriz[7][3] == 0 && matriz[7][2] == 0 && matriz[7][1] == 0 &&
+				!Jaque(false);
+		}
+	}
+}
+
+
+void Tablero::RealizarEnroque(bool esCorto) {
+
+	// Encontrar el rey y la torre correspondiente
+	int reyIndex = -1, torreIndex = -1;
+	int torreCol = esCorto ? 9 : 0;
+
+	for (int z = 0; z < piezas.size(); z++) {
+		Vector pos = piezas[z]->Get_Posicion();
+		// Buscar el rey
+		if (pos.x == pos_x && pos.y == pos_y && abs(piezas[z]->Get_Valor()) == REY) {
+			reyIndex = z;
+		}
+		// Buscar la torre
+		else if (pos.x == pos_x && pos.y == torreCol && abs(piezas[z]->Get_Valor()) == TORRE) {
+			torreIndex = z;
+		}
+	}
+
+	if (reyIndex == -1 || torreIndex == -1) return;
+
+	if (color) { // Blancas
+		if (enroqueCortoBlancas == true && enroqueLargoBlancas == true) {
+			if (esCorto) { // Enroque corto (0-0)
+				// Mover torre 
+				piezas[torreIndex]->Set_Posicion(pos_x, 7);
+				matriz[0][7] = TORRE;
+				matriz[0][9] = 0;
+				// Mover rey
+				piezas[reyIndex]->Set_Posicion(pos_x, 8);
+				matriz[0][8] = REY;
+				matriz[0][5] = 0;
+
+
+			}
+			else { // Enroque largo (0-0-0)
+				// Mover torre (a1 -> d1)
+				piezas[torreIndex]->Set_Posicion(pos_x, 2);
+				matriz[0][2] = TORRE;
+				matriz[0][0] = 0;
+				// Mover rey (e1 -> a1)
+				piezas[reyIndex]->Set_Posicion(pos_x, 1);
+				matriz[0][1] = REY;
+				matriz[0][5] = 0;
+
+
+			}
+			enroqueLargoBlancas = false; // Deshabilitar enroque largo para blancas
+			enroqueCortoBlancas = false; // Deshabilitar enroque corto para blancas
+		}
+	}
+	else { // Negras
+		if (enroqueCortoNegras == true && enroqueLargoNegras == true) {
+
+			if (esCorto) { // Enroque corto (0-0)
+				// Mover rey (e8 -> h8)
+				piezas[reyIndex]->Set_Posicion(pos_x, 8);
+				matriz[7][8] = -REY;
+				matriz[7][5] = 0;
+
+				// Mover torre (h8 -> f8)
+				piezas[torreIndex]->Set_Posicion(pos_x, 7);
+				matriz[7][7] = -TORRE;
+				matriz[7][9] = 0;
+			}
+			else { // Enroque largo (0-0-0)
+				// Mover rey (e8 -> a8)
+				piezas[reyIndex]->Set_Posicion(pos_x, 1);
+				matriz[7][1] = -REY;
+				matriz[7][5] = 0;
+
+				// Mover torre (a8 -> d8)
+				piezas[torreIndex]->Set_Posicion(pos_x, 2);
+				matriz[7][2] = -TORRE;
+				matriz[7][0] = 0;
+			}
+			enroqueLargoNegras = false; // Deshabilitar enroque largo para negras
+			enroqueCortoNegras = false; // Deshabilitar enroque corto para negras
+		}
+	}
+
+	// Reproducir sonido y actualizar estado
+	ETSIDI::play("sonidos/enroque.wav");
+	if (color) {
+		enroqueCortoBlancas = enroqueLargoBlancas = false;
+	}
+	else {
+		enroqueCortoNegras = enroqueLargoNegras = false;
+	}
+}
+
+
+
+
+//Verifica si el color del rey especificado está en jaque o no
+bool Tablero::Jaque(bool col) {
+	int rey_i = 0, rey_j = 0;
+
+	// Buscar posición del rey
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			if ((col && matriz[i][j] == REY) || (!col && matriz[i][j] == -REY)) {
+				rey_i = i; rey_j = j;
+				break;
+			}
+		}
+	}
+
+	// Verificar si alguna pieza enemiga puede capturar al rey
+	bool turnoOriginal = color;
+	color = !col;  // Cambiar temporalmente el turno para verificar desde perspectiva del oponente
+	int temp_x = pos_x, temp_y = pos_y;
+
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			if ((col && matriz[i][j] < 0) || (!col && matriz[i][j] > 0)) {
+				pos_x = i; pos_y = j;
+				if (Selec_Mover(rey_i, rey_j, false)) {  // Verificar si puede capturar al rey
+					pos_x = temp_x; pos_y = temp_y;
+					color = turnoOriginal;
+					return true;
+				}
+			}
+		}
+	}
+
+	// Restaurar valores originales
+	pos_x = temp_x; pos_y = temp_y;
+	color = turnoOriginal;
+	return false;
+}
+
+
+bool Tablero::Consultar_Turno() {
+	return color;
+}
+
+
+
+bool Tablero::Selec_Peon(int i, int j) {
+
+	// CORRECCIÓN: Movimiento diagonal solo si hay pieza
+	if (color) { // Blancas
+		// Movimiento vertical
+		if (matriz[i][j] == 0 && j == pos_y) {
+			if (i == pos_x + 1) return true;  // Avance normal
+		}
+		// Comer (diagonal)
+		if (matriz[i][j] != 0 && abs(j - pos_y) == 1 && i == pos_x + 1) {
+			return true;
+		}
+	}
+	else { // Negras
+		// Movimiento vertical
+		if (matriz[i][j] == 0 && j == pos_y) {
+			if (i == pos_x - 1) return true;  // Avance normal
+		}
+		// Comer (diagonal)
+		if (matriz[i][j] != 0 && abs(j - pos_y) == 1 && i == pos_x - 1) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+bool Tablero::Selec_Rey(int i, int j) {
+	/*
+	bool sol = false;
+	if (matriz[i][j] == 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2) ) { sol = true; }                       
+	if (color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Blanco
+	if (!color && matriz[i][j] != 0 && (abs(pos_x - i) < 2) && (abs(pos_y - j) < 2)) { sol = true; } //Negro
+	return sol;
+	*/
+
+	// Movimiento normal del rey (1 casilla)
+	if (abs(pos_x - i) <= 1 && abs(pos_y - j) <= 1) {
+		return true;
+	}
+
+	// Enroque (detección de movimiento largo)
+	if (abs(pos_y - j) >= 3 && pos_x == i) {  // 3 o más casillas
+		return Selec_Enroque(i, j);
+	}
+
+	return false;
+}
+
+bool Tablero::Selec_Alfil(int i, int j) { 
+	if (abs(pos_y - j) == abs(pos_x - i)) {
+		int valorii = (pos_x - i < 0 ? 1 : -1);
+		int valorjj = (pos_y - j < 0 ? 1 : -1);
+		int ii = pos_x;
+		int jj = pos_y;
+
+		while (ii != i - valorii && jj != j - valorjj) {
+			ii += valorii;
+			jj += valorjj;
+			if (ii < 0 || jj < 0)return false;
+			else if (matriz[ii][jj] != 0)return false;
+		}
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		else if (!color && matriz[i][j] != 0)return true;
+	}
+	return false;
+}
+
+bool Tablero::Selec_Caballo(int i, int j) {
+	bool sol = false;
+	if (color) {
+		if (((abs(pos_x - i) == 2 && abs(pos_y - j) == 1) || (abs(pos_x - i) == 1) && abs(pos_y - j) == 2)) sol = true;
+	}
+	else {
+		if (((abs(pos_x - i) == 2 && abs(pos_y - j) == 1) || (abs(pos_x - i) == 1) && abs(pos_y - j) == 2)) sol = true;
+	}
+	return sol;
+}
+
+bool Tablero::Selec_Torre(int i, int j) {
+	if (pos_y == j) {
+
+		for (int ii = std::min(pos_x, i) + 1; ii < std::max(pos_x, i); ii++) {
+			if (matriz[ii][pos_y] != 0) return false;
+		}
+
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		if (!color && matriz[i][j] != 0)return true;
+	}
+	if (pos_x == i) {
+
+		for (int jj = std::min(pos_y, j) + 1; jj < std::max(pos_y, j); jj++) {
+			if (matriz[pos_x][jj] != 0) return false;
+		}
+
+		if (matriz[i][j] == 0) return true;
+		if (color && matriz[i][j] != 0) return true;
+		if (!color && matriz[i][j] != 0) return true;
+	}
+	return false;
+}
+
+
+bool Tablero::Selec_Dama(int i, int j) {
+	if (Selec_Torre(i, j) || Selec_Alfil(i, j))return true;
+	return false;
+}
+
+bool Tablero::Selec_Arzobispo(int i, int j) {
+	if (Selec_Caballo(i, j) || Selec_Alfil(i, j))return true;
+	return false;
+}
+
+bool Tablero::Selec_Canciller(int i, int j) {
+	if (Selec_Torre(i, j) || Selec_Caballo(i, j))return true;
+	return false;
+}
+
+
+void Tablero::Comprobar_Jaque() {
+
+	if (Jaque(!color)) {
+		if (color) {
+			jaqnegras = true;
+			ETSIDI::play("sonidos/jaque.wav");
+		}
+		else {
+			jaqblancas = true;
+			ETSIDI::play("sonidos/jaque.wav");
+		}
+	}
+	else {
+		if (color)
+			jaqnegras = false;
+		else
+			jaqblancas = false;
+	}
+
+}
+
+
+//Verifica si el jugador actual está en Jaque Mate o no
+void Tablero::Comprobar_JaqueMate() {
+	bool esJaqueMate = true;
+	bool escapeEncontrado = false;
+
+	// Verificar todas las piezas del jugador en turno
+	for (int i = 0; i < 8 && !escapeEncontrado; i++) {
+		for (int j = 0; j < 10 && !escapeEncontrado; j++) {
+			if ((color && matriz[i][j] > 0) || (!color && matriz[i][j] < 0)) {
+				pos_x = i; pos_y = j;
+
+				// Verificar todos los posibles movimientos
+				for (int l = 0; l < 8 && !escapeEncontrado; l++) {
+					for (int k = 0; k < 10 && !escapeEncontrado; k++) {
+						if (Selec_Mover(l, k, true)) {  // Si existe al menos un movimiento legal
+							esJaqueMate = false;
+							escapeEncontrado = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Actualizar estado de jaque mate
+	if (esJaqueMate) {
+		if (color) {
+			jaqmateblancas = true;
+		}
+		else {
+			jaqmatenegras = true;
+		}
+		ETSIDI::play("sonidos/JaqueMate.wav");
+	}
+	else {
+		jaqmateblancas = jaqmatenegras = false;
+	}
+
+	// Verificar tablas (rey ahogado)
+	if ((jaqmatenegras && !jaqnegras) || (jaqmateblancas && !jaqblancas)) {
+		tablas = true;
+	}
+}
+
+void Tablero::Coronar(int posicion_selecc, int pos_x, int pos_y, Vector destino) {
+	// Coronar peón blanco (llegada a fila 7)
+	if (destino.x == 7 && piezas[posicion_selecc]->Get_Valor() == PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(DAMA);
+		matriz[destino.x][destino.y] = DAMA;  // Actualizar matriz
+	}
+	// Coronar peón negro (llegada a fila 0)
+	else if (destino.x == 0 && piezas[posicion_selecc]->Get_Valor() == -PEON) {
+		piezas[posicion_selecc]->Cambiar_Valor(-DAMA);
+		matriz[destino.x][destino.y] = -DAMA;  // Actualizar matriz
+	}
+}
+
+
+
+void Tablero::Borrar() {
+	//Eliminar todas las piezas del tablero y reiniciar la matriz de juego
+	for (int z = 0; z < static_cast<int>(piezas.size()); z++) {
+		delete piezas[z];
+	}
+	piezas.clear();  // Vaciar el vector
+
+	// Limpiar la matriz
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 10; j++) {
+			matriz[i][j] = 0;
+		}
+	}
 }
 
